@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "creapy"
+version = "0.3.0"
+description = "Eye-tracking visual analytics for art history and empirical aesthetics (CReA Lab, University of Vienna): library + creapy.io desktop app"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{name = "Xingyu Long", email = "xingyu.long@univie.ac.at"}]
+requires-python = ">=3.10"
+keywords = ["eye-tracking", "heatmap", "scanpath", "saccades", "fixations", "art-history", "empirical-aesthetics", "EyeLink", "Tobii"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.2",
+    "scipy>=1.13",
+    "matplotlib>=3.9",
+    "shapely>=2.0",
+    "scikit-learn>=1.5",
+    "tqdm>=4.66",
+    "openpyxl>=3.1",
+    "Pillow>=10",
+    "heatmatch>=1.0.0",
+]
+
+[project.optional-dependencies]
+gui = ["PySide6>=6.7"]
+dev = ["pytest>=8", "PySide6>=6.7"]
+
+[project.scripts]
+creapy-io = "creapy.io.main:main"
+
+[project.urls]
+Homepage = "https://crea.univie.ac.at"
+Repository = "https://github.com/xysLong/creapy"
+Issues = "https://github.com/xysLong/creapy/issues"
+Changelog = "https://github.com/xysLong/creapy/blob/main/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+include = ["creapy", "creapy.*"]
+
+[tool.setuptools.package-data]
+"creapy.io" = ["style/*.qss", "style/*.png"]
+"creapy.examples" = ["*.csv", "*.png", "*.md"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

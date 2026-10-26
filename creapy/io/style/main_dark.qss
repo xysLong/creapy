@@ -1,0 +1,336 @@
+/* ---------------------- Base ---------------------- */
+
+QMainWindow {
+    background-color: #05060a;
+}
+
+QLabel {
+    color: #f2f3f7;
+}
+
+QLineEdit {
+    padding: 4px;
+    background-color: #12141c;
+    color: #f2f3f7;
+    border: 1px solid #363a47;
+    border-radius: 4px;
+}
+
+QLineEdit:focus {
+    border-color: #4da3ff;
+}
+
+/* ---------------------- Buttons ---------------------- */
+/* Keep buttons visually consistent with the first dark QSS */
+
+QPushButton {
+    padding: 8px 14px;
+    background-color: #11141f;
+    color: #4da3ff;
+    border-radius: 16px;
+    font-weight: 600;
+    border: 1px solid rgba(77, 163, 255, 0.9);
+}
+
+QPushButton:hover:enabled {
+    background-color: rgba(77, 163, 255, 0.12);
+}
+
+QPushButton:pressed:enabled {
+    background-color: rgba(77, 163, 255, 0.22);
+}
+
+QPushButton:disabled {
+    background-color: #363a47;
+    color: #767c8c;
+    border: 1px solid #363a47;
+}
+
+/* ---------------------- Left navigation list ---------------------- */
+
+QListWidget {
+    color: #f2f3f7;
+    background-color: #11141f;
+    border-right: 1px solid #272b38;
+    font-weight: 500;
+}
+
+QListWidget::item {
+    padding: 8px 10px;
+}
+
+QListWidget::item:selected {
+    background-color: #4da3ff;
+    color: #05060a;
+}
+
+QListWidget::item:hover {
+    background-color: #202331;
+}
+
+/* ---------------------- Heatmap toolbar panel ---------------------- */
+
+QWidget#heatmapToolbar {
+    background-color: #11141f;
+    border-left: 1px solid #272b38;
+    border-top: 1px solid #05060a;  /* subtle edge */
+}
+
+/* Section titles (e.g. "Heatmap Settings", "Scatter Settings") */
+QLabel[sectionTitle="true"] {
+    font-size: 11px;
+    font-weight: 600;
+    color: #a0a4b3;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+/* Parameter value labels to the right of titles */
+QLabel[paramLabel="true"] {
+    color: #c4c8d5;
+    font-weight: 500;
+}
+
+/* Optional: extra-bold titles if you mark them */
+QLabel[boldTitle="true"] {
+    font-weight: bold;
+}
+
+/* Full-width separator line in toolbar */
+QFrame#sectionSeparator {
+    border-top: 1px solid #272b38;
+    margin: 0px;
+    background-color: transparent;
+}
+
+/* ---------------------- Sliders ---------------------- */
+
+QSlider::groove:horizontal {
+    border: none;
+    height: 4px;
+    background: #272b38;
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    background: #4da3ff;
+    border: none;
+    width: 14px;
+    margin: -5px 0;  /* lift handle slightly */
+    border-radius: 7px;
+}
+
+QSlider::handle:horizontal:hover {
+    background: #7abbff;
+}
+
+QSlider::handle:horizontal:pressed {
+    background: #2b87ff;
+}
+
+/* ---------------------- Combobox (collapsed + popup items) ---------------------- */
+
+QComboBox {
+    padding: 4px 8px;
+    border: 1px solid #363a47;
+    border-radius: 4px;
+    background-color: #11141f;
+    color: #f2f3f7;
+    font-family: "Courier New", "Consolas", "Liberation Mono", "monospace";
+}
+
+QComboBox:hover {
+    background-color: #181a24;
+    border-color: #4da3ff;
+}
+
+QComboBox::drop-down {
+    background-color: #181a24;
+    border: none;
+    width: 18px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+}
+
+/* Items (used both for collapsed text and popup list) */
+QComboBox::item {
+    color: #f2f3f7;
+    background-color: #11141f;
+}
+
+QComboBox::item:selected {
+    background-color: #4da3ff;
+    color: #05060a;
+}
+
+QComboBox::item:hover {
+    background-color: #202331;
+    color: #f2f3f7;
+}
+
+/* ---------------------- Checkboxes ---------------------- */
+
+QCheckBox {
+    color: #f2f3f7;
+}
+
+/* optional: make the checkbox indicator match the dark theme */
+QCheckBox::indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid #4da3ff;
+    background-color: #11141f;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #4da3ff;
+}
+
+QCheckBox::indicator:disabled {
+    border-color: #363a47;
+    background-color: #363a47;
+}
+
+/* ---------------------- Filter bar (participants + time window) ---------------------- */
+
+QFrame#FilterBar {
+    background-color: #0c0e16;
+    border-bottom: 1px solid #272b38;
+}
+
+QPushButton#SmallButton {
+    padding: 3px 10px;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* ---------------------- Menu + status bar ---------------------- */
+
+QMenuBar {
+    background-color: #0c0e16;
+    color: #f2f3f7;
+    border-bottom: 1px solid #272b38;
+}
+
+QMenuBar::item:selected {
+    background-color: #202331;
+}
+
+QMenu {
+    background-color: #11141f;
+    color: #f2f3f7;
+    border: 1px solid #363a47;
+}
+
+QMenu::item:selected {
+    background-color: #4da3ff;
+    color: #05060a;
+}
+
+QStatusBar {
+    background-color: #0c0e16;
+    color: #a0a4b3;
+    border-top: 1px solid #272b38;
+}
+
+/* ---------------------- Tables (statistics, AOI metrics, mapping preview) ---------------------- */
+
+QTableWidget, QTableView {
+    background-color: #0c0e16;
+    alternate-background-color: #11141f;
+    color: #f2f3f7;
+    gridline-color: #272b38;
+    border: none;
+    selection-background-color: #2b3a55;
+}
+
+QHeaderView::section {
+    background-color: #181a24;
+    color: #c4c8d5;
+    padding: 4px 6px;
+    border: none;
+    border-right: 1px solid #272b38;
+    border-bottom: 1px solid #272b38;
+    font-weight: 600;
+}
+
+QTableCornerButton::section {
+    background-color: #181a24;
+    border: none;
+}
+
+QListWidget#aoiList, QListWidget {
+    background-color: #0c0e16;
+}
+
+QTextBrowser {
+    background-color: #0c0e16;
+    color: #f2f3f7;
+    border: none;
+    padding: 8px;
+}
+
+QDialog {
+    background-color: #11141f;
+    color: #f2f3f7;
+}
+
+QLineEdit, QSpinBox {
+    background-color: #0c0e16;
+    color: #f2f3f7;
+    border: 1px solid #363a47;
+    border-radius: 4px;
+    padding: 3px;
+}
+
+QToolTip {
+    background-color: #1e2230;
+    color: #f2f3f7;
+    border: 1px solid #4da3ff;
+}
+
+QScrollBar:vertical, QScrollBar:horizontal {
+    background: #0c0e16;
+}
+
+/* ---------------------- Explanations ---------------------- */
+QLabel#FigureCaption {
+    font-size: 11px;
+    color: #a0a4b3;
+}
+
+QToolButton#InfoButton {
+    border: 1px solid #a0a4b3;
+    border-radius: 9px;
+    min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px;
+    padding: 0; margin: 0;
+    font-size: 11px; font-weight: 700;
+    color: #a0a4b3;
+    background: transparent;
+}
+QToolButton#InfoButton:hover, QToolButton#InfoButton:checked {
+    color: #4da3ff;
+    border-color: #4da3ff;
+}
+
+QLabel#PanelTitle {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+QDockWidget#ExplainerDock {
+    titlebar-close-icon: none;
+}
+QDockWidget#ExplainerDock::title {
+    background: #1e2230;
+    color: #c4c8d5;
+    padding: 6px 10px;
+    font-weight: 600;
+}
+QDockWidget#ExplainerDock QTextBrowser {
+    border: none;
+    padding: 6px;
+}

@@ -1,0 +1,12 @@
+# Runtime dependencies (the authoritative list is pyproject.toml; `pip install -e ".[gui]"` installs everything)
+numpy>=1.26
+pandas>=2.2
+scipy>=1.13
+matplotlib>=3.9
+shapely>=2.0
+scikit-learn>=1.5
+tqdm>=4.66
+openpyxl>=3.1
+Pillow>=10
+heatmatch>=1.0.0
+PySide6>=6.7

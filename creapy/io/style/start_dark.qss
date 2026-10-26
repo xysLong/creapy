@@ -1,0 +1,139 @@
+/* ---------- Global ---------- */
+
+QMainWindow {
+    background-color: #121212;   /* very dark background */
+}
+
+QWidget {
+    color: #f2f3f7;              /* default text color */
+    font-family: "Avenir", "Lato", "Helvetica", "Arial";
+}
+
+/* ---------- Header ---------- */
+
+QLabel#LogoLabel {
+    font-size: 40px;
+    margin-bottom: 4px;
+}
+
+QLabel#ThumbLabel {
+    background: transparent;
+    border: none;
+}
+
+QLabel#TitleLabel {
+    font-size: 48px;
+    font-weight: 1000;
+    color: #f5f5f5;
+}
+
+QLabel#SubtitleLabel {
+    font-size: 18px;
+    color: #a0a4b3;              /* softer grey */
+    margin-top: 4px;
+}
+
+QLabel#CreditsLabel {
+    font-family: "Courier New", "Consolas", "Liberation Mono", "monospace";
+    font-size: 12px;
+    color: #6f7380;
+    margin-top: 2px;
+}
+
+/* ---------- Cards ---------- */
+
+QFrame#DataCard {
+    background-color: rgba(18, 20, 28, 0.96);     /* dark card */
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.08);  /* subtle light border */
+    padding: 18px;
+}
+
+QFrame#DataCard:hover {
+    border: 1px solid #4da3ff;                   /* blue accent on hover */
+    background-color: #202331;
+}
+
+/* ---------- Text inside cards ---------- */
+
+QLabel#SectionTitle {
+    font-size: 28px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+QLabel#BodyLabel {
+    font-size: 16px;
+    color: #c4c8d5;                               /* high-contrast body text */
+}
+
+/* ---------- Buttons ---------- */
+
+QPushButton {
+    min-height: 32px;
+    padding: 6px 18px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 18px;
+
+    background-color: #11141f;                    /* dark button background */
+    color: #4da3ff;                               /* accent text */
+    border: 1px solid rgba(77, 163, 255, 0.9);    /* accent border */
+}
+
+/* hover & pressed states */
+QPushButton:hover:!disabled {
+    background-color: rgba(77, 163, 255, 0.12);
+}
+
+QPushButton:pressed:!disabled {
+    background-color: rgba(77, 163, 255, 0.22);
+}
+
+QPushButton:disabled {
+    background-color: #363a47;
+    color: #767c8c;
+    border: 1px solid #363a47;
+}
+
+QMenuBar {
+    background-color: #0c0e16;
+    color: #f2f3f7;
+    font-size: 13px;
+    border-bottom: 1px solid #272b38;
+}
+
+QMenuBar::item:selected {
+    background-color: #202331;
+}
+
+QMenu {
+    background-color: #11141f;
+    color: #f2f3f7;
+    border: 1px solid #363a47;
+    font-size: 13px;
+}
+
+QMenu::item:selected {
+    background-color: #4da3ff;
+    color: #05060a;
+}
+
+QStatusBar {
+    background-color: #0c0e16;
+    color: #a0a4b3;
+    font-size: 12px;
+    border-top: 1px solid #272b38;
+}
+
+QTextBrowser {
+    background-color: #0c0e16;
+    color: #f2f3f7;
+    border: none;
+    padding: 8px;
+    font-size: 14px;
+}
+
+QDialog {
+    background-color: #11141f;
+}
