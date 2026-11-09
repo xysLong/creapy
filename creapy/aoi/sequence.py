@@ -4,21 +4,12 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 from matplotlib.collections import PolyCollection
 
-# AOI sequences: which area each fixation falls into, in viewing order. Feeds the transition matrix, the scarf plot
-# (participants x time, coloured by AOI: Richardson & Dale 2005 / the Tobii "AOI sequence chart") and the
-# visit/revisit counts. A fixation inside several overlapping AOIs is assigned to the FIRST one in the dict order.
 
 OUTSIDE = 'outside'
 
 
 def aoi_sequence(fix, names=None, include_outside=True):
-    """
-    Which AOI each fixation fell into, in viewing order. One row per fixation with columns participant, trial,
-    t (fixation onset in seconds), dur (duration in the dataset's unit), aoi (AOI name or 'outside') and order
-    (1-based rank within participant and trial). names restricts and orders the AOIs; a fixation inside several
-    overlapping AOIs goes to the first one. include_outside=False drops fixations outside every AOI.
-    """
-    # One row per fixation: participant, trial, order, t (s), dur, aoi (name or 'outside')
+    """Which AOI each fixation fell into, in viewing order."""
     if names is None:
         names = list(fix.areas_of_interest)
     label = np.full(len(fix.df), OUTSIDE, dtype=object)
@@ -37,12 +28,7 @@ def aoi_sequence(fix, names=None, include_outside=True):
 
 
 def collapse_runs(df_seq):
-    """
-    Merge consecutive fixations in the same AOI into one visit. Takes the output of aoi_sequence and returns one
-    row per visit: participant, trial, aoi, t_start, t_end (onset of the first and last fixation, seconds),
-    n_fixations and dwell (summed duration in the dataset's unit).
-    """
-    # Consecutive fixations in the same AOI -> one visit: participant, trial, aoi, t_start, t_end, n_fixations, dwell
+    """Merge consecutive fixations in the same AOI into one visit."""
     ls = []
     for (subj, trial), df_ in df_seq.groupby(['participant', 'trial'], sort=False):
         aoi = df_['aoi'].to_numpy()
@@ -56,12 +42,7 @@ def collapse_runs(df_seq):
 
 
 def transition_matrix(fix, names=None, include_outside=False, normalize='row', per_participant_weight=True):
-    """
-    AOI -> AOI transitions between consecutive VISITS (self-transitions excluded, so a run of fixations inside one
-    AOI counts once). normalize: None (counts), 'row' (share of departures from each AOI), 'all' (share of all
-    transitions). per_participant_weight=True weights every participant's transitions to sum to 1, so a viewer
-    with many fixations does not dominate.
-    """
+    """AOI -> AOI transitions between consecutive visits, self-transitions excluded."""
     df_seq = aoi_sequence(fix, names=names, include_outside=include_outside)
     labels = (names if names is not None else list(fix.areas_of_interest)) + ([OUTSIDE] if include_outside else [])
     counts = pd.DataFrame(0., index=labels, columns=labels)
@@ -86,7 +67,7 @@ def transition_matrix(fix, names=None, include_outside=False, normalize='row', p
     pivot = df_trans.pivot_table(index='from', columns='to', values='w', aggfunc='sum', fill_value=0.)
     counts = counts.add(pivot, fill_value=0.).loc[labels, labels]
     if per_participant_weight:
-        counts = counts * df_trans['participant'].nunique()  # back to "number of transitions"-like scale
+        counts = counts * df_trans['participant'].nunique()
     if normalize == 'row':
         row_sums = counts.sum(axis=1)
         counts = counts.div(row_sums.where(row_sums > 0, np.nan), axis=0)
@@ -99,11 +80,7 @@ def transition_matrix(fix, names=None, include_outside=False, normalize='row', p
 
 
 def show_transition_matrix(ax, matrix, cmap='Blues', fmt='{:.0%}', text_color_switch=0.6):
-    """
-    Draw a transition_matrix() as a heat-table on ax: rows = from, columns = to, each cell annotated with its
-    value (fmt, default percent; NaN cells stay blank). Returns the AxesImage.
-    """
-    # Heat-table of the transition matrix with the value written into each cell
+    """Draw a transition_matrix() as a heat-table on ax (rows = from, columns = to)."""
     values = matrix.to_numpy(dtype=float)
     im = ax.imshow(np.nan_to_num(values), cmap=cmap, vmin=0, vmax=np.nanmax(values) if np.isfinite(values).any() else 1)
     ax.set_xticks(range(len(matrix.columns)))
@@ -134,10 +111,7 @@ def aoi_palette(names, include_outside=True):
 
 def show_scarf_plot(ax, fix, names=None, subjects=None, colors=None, relative_time=True, outside_alpha=0.35,
                     row_height=0.8):
-    """
-    Scarf plot: one row per participant, viewing time on x, each fixation a bar coloured by the AOI it fell into
-    (grey = outside every AOI). Several trials of one participant are concatenated in time order.
-    """
+    """Scarf plot: one row per participant, viewing time on x."""
     df_seq = aoi_sequence(fix, names=names, include_outside=True)
     if names is None:
         names = list(fix.areas_of_interest)
@@ -158,7 +132,6 @@ def show_scarf_plot(ax, fix, names=None, subjects=None, colors=None, relative_ti
     x1 = x0 + df_plot['dur_s'].to_numpy(dtype=float)
     y0 = rows - row_height / 2
     y1 = rows + row_height / 2
-    # one PolyCollection for all fixations (23k bars as separate artists took 14 s to draw)
     verts = np.stack([np.column_stack([x0, y0]), np.column_stack([x1, y0]),
                       np.column_stack([x1, y1]), np.column_stack([x0, y1])], axis=1)
     rgba = np.array([colors.get(a, (0.5, 0.5, 0.5, 1.)) for a in df_plot['aoi']], dtype=float)
@@ -169,12 +142,11 @@ def show_scarf_plot(ax, fix, names=None, subjects=None, colors=None, relative_ti
         ax.set_yticks(range(len(subjects)))
         ax.set_yticklabels([str(s) for s in subjects], fontsize=7 if len(subjects) > 30 else 9)
     else:
-        # 157 participant names would overprint: label every tenth row
         step = 10 if len(subjects) <= 200 else 25
         ax.set_yticks(range(0, len(subjects), step))
         ax.set_yticklabels([str(subjects[i]) for i in range(0, len(subjects), step)], fontsize=7)
         ax.set_ylabel(f"participants ({len(subjects)})")
-    ax.set_ylim(len(subjects) - 0.4, -0.6)  # first participant on top
+    ax.set_ylim(len(subjects) - 0.4, -0.6)
     ax.set_xlabel("Viewing time (s)")
     handles = [Patch(color=colors[name], label=name) for name in names] + \
               [Patch(color=colors[OUTSIDE], alpha=outside_alpha, label=OUTSIDE)]
@@ -183,11 +155,7 @@ def show_scarf_plot(ax, fix, names=None, subjects=None, colors=None, relative_ti
 
 
 def first_fixation_order(fix, names=None):
-    """
-    In which order each participant first visited the AOIs. One row per participant with one column per AOI
-    holding the rank of its first fixation (1 = looked at first); NaN means the AOI was never fixated.
-    """
-    # Which AOI was looked at first, second, ... per participant (rank of the first visit; NaN = never)
+    """In which order each participant first visited the AOIs."""
     df_seq = aoi_sequence(fix, names=names, include_outside=False)
     if names is None:
         names = list(fix.areas_of_interest)

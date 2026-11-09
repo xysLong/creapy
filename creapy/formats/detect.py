@@ -1,9 +1,6 @@
 import pandas as pd
 from creapy.formats.table import numeric_columns, image_like_columns
 
-# The fields creapy needs for each data type: key -> (label shown in the GUI, required?, name hints).
-# Hints are matched case-insensitively as substrings; the first column matching the first hint wins,
-# then the second hint, etc. EyeLink DataViewer names come first, then Tobii Pro Lab, then generic words.
 FIXATION_FIELDS = {
     'stim_col': ('Stimulus (image name or path)', True,
                  ['image', 'stimulus', 'presented media name', 'snapshot', 'picture', 'painting', 'media']),
@@ -47,11 +44,7 @@ NUMERIC_FIELDS = ['fix_t_col', 'fix_dur_col', 'fix_x_col', 'fix_y_col', 'pupil_c
 
 
 def detect_format(columns):
-    """
-    Classify a table by its column names alone: 'eyelink_fixation', 'eyelink_saccade', 'tobii_event_export',
-    'tobii_data_export', 'tobii_metrics_export' or 'unknown'. Case-insensitive; no cell values are looked at.
-    """
-    # 'eyelink_fixation' | 'eyelink_saccade' | 'tobii_event_export' | 'tobii_data_export' | 'tobii_metrics_export' | 'unknown'
+    """Classify a table by its column names alone (EyeLink fixation or saccade report, Tobii export, generic)."""
     cols = [str(c).lower() for c in columns]
     joined = ' | '.join(cols)
     if 'current_fix_x' in joined and 'current_fix_y' in joined:
@@ -68,14 +61,7 @@ def detect_format(columns):
 
 
 def guess_mapping(df, fields):
-    """
-    Best-effort column mapping for `fields` (FIXATION_FIELDS or SACCADE_FIELDS): a dict field key -> column
-    name, None for optional fields without a match. Hints are tried in priority order, numeric fields only take
-    numeric columns, the stimulus prefers image-like columns, required fields fall back to the first unused
-    column. For EyeLink tables whose times exceed 60 the key 'time_unit' = 'ms' is added.
-    """
-    # Best-effort column mapping for the GUI dialog: hints in priority order, numeric fields must be numeric,
-    # the stimulus column prefers image-like values. Optional fields may map to None.
+    """Best-effort column mapping for `fields` (FIXATION_FIELDS or SACCADE_FIELDS)."""
     columns = list(df.columns)
     lower = {col: str(col).lower() for col in columns}
     numeric = set(numeric_columns(df))
@@ -100,7 +86,6 @@ def guess_mapping(df, fields):
                 if chosen is not None:
                     break
         if chosen is None and required:
-            # fall back to the first unused column of the right kind so every combo has a value
             candidates = [c for c in columns if c not in taken and (key not in NUMERIC_FIELDS or c in numeric)]
             chosen = candidates[0] if candidates else columns[0]
         mapping[key] = chosen
@@ -109,18 +94,13 @@ def guess_mapping(df, fields):
     t_key = 'fix_t_col' if 'fix_t_col' in fields else 'sac_t_col'
     if detect_format(columns).startswith('eyelink') and mapping.get(t_key) is not None:
         t_max = pd.to_numeric(df[mapping[t_key]], errors='coerce').max()
-        if t_max > 60:  # DataViewer reports are in ms; preprocessed tables (seconds, < 60) keep the heuristic
+        if t_max > 60:
             mapping['time_unit'] = 'ms'
     return mapping
 
 
 def validate_mapping(df, mapping, fields):
-    """
-    Human-readable problems with a mapping as a list of strings (required field unassigned, column missing
-    from df, numeric field with no or mostly non-numeric values, one column used for two required fields);
-    an empty list means the mapping is usable.
-    """
-    # Human-readable problems with a mapping, [] if it is usable
+    """Human-readable problems with a mapping, as a list of strings; empty when the mapping is usable."""
     problems = []
     for key, (label, required, _) in fields.items():
         col = mapping.get(key)

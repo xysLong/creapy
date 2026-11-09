@@ -1,7 +1,3 @@
-"""
-docs/QUICKSTART.md -> docs/QUICKSTART.pdf with Qt's own HTML renderer (no LaTeX, no pandoc): the two-page hand-out.
-Run:  QT_QPA_PLATFORM=offscreen python docs/make_quickstart_pdf.py
-"""
 import os
 import re
 import sys
@@ -13,7 +9,6 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def join_wrapped_lines(md):
-    # a wrapped paragraph or list item becomes one line, so **bold** across a line break is still recognised
     out = []
     for line in md.splitlines():
         continuation = (out and out[-1].strip() and not out[-1].startswith(('#', '|'))
@@ -28,7 +23,6 @@ def join_wrapped_lines(md):
 
 
 def markdown_to_html(md):
-    # the small Markdown subset used in QUICKSTART.md: headings, paragraphs, lists, tables, bold/italic/code
     html = []
     in_list = None
     in_table = False
@@ -105,7 +99,7 @@ def main():
     writer = QPdfWriter(out)
     writer.setPageSize(QPageSize(QPageSize.A4))
     writer.setPageMargins(QMarginsF(16, 14, 16, 14), QPageLayout.Millimeter)
-    writer.setResolution(72)  # 1 px = 1 pt, so the CSS point sizes are what they say
+    writer.setResolution(72)
     doc.setPageSize(QSizeF(writer.width(), writer.height()))
     doc.print_(writer)
     print(f"written {out} ({doc.pageCount()} pages)")

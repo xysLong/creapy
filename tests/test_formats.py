@@ -15,7 +15,7 @@ def test_read_table_sniffs_semicolon_and_decimal_comma(tmp_path):
     df = read_table(str(path))
     assert list(df.columns) == ['subject', 'image', 'x', 'y', 't', 'dur']
     assert df['x'].dtype.kind == 'f' and df['x'].iloc[0] == 12.5
-    assert np.isnan(df['x'].iloc[1])  # EyeLink '.' -> NaN
+    assert np.isnan(df['x'].iloc[1])
 
 
 def test_read_table_tab_and_excel(tmp_path, fixation_table):
@@ -32,7 +32,7 @@ def test_detect_and_guess_eyelink(fixation_table):
     mapping = guess_mapping(fixation_table, FIXATION_FIELDS)
     assert mapping['fix_x_col'] == 'CURRENT_FIX_X'
     assert mapping['fix_t_col'] == 'CURRENT_FIX_START'
-    assert mapping['stim_col'] == 'image'  # image-like values win over name hints
+    assert mapping['stim_col'] == 'image'
     assert mapping['trial_col'] == 'TRIAL_INDEX'
     assert mapping['pupil_col'] == 'CURRENT_FIX_PUPIL'
     assert validate_mapping(fixation_table, mapping, FIXATION_FIELDS) == []
@@ -50,7 +50,7 @@ def test_guess_saccade_report():
 
 def test_validate_mapping_reports_problems(fixation_table):
     mapping = guess_mapping(fixation_table, FIXATION_FIELDS)
-    mapping['fix_x_col'] = 'image'  # text column where numbers are needed
+    mapping['fix_x_col'] = 'image'
     problems = validate_mapping(fixation_table, mapping, FIXATION_FIELDS)
     assert any('no numbers' in p for p in problems)
 
@@ -63,11 +63,10 @@ def test_tobii_screen_export(tmp_path, unit_suffix, decimal_comma, microseconds)
     df_raw = read_table(path)
     assert detect_format(df_raw.columns) == 'tobii_data_export'
     df, mapping = load_prolab_data_export(path)
-    assert len(df) == 6  # 2 recordings x 3 fixations, samples collapsed
+    assert len(df) == 6
     assert set(df['participant']) == {'Visitor 01', 'Visitor 02'}
     assert (df['stimulus'] == 'painting.png').all()
     assert mapping['fix_x_col'] == 'x' and mapping['subj_index_col'] == 'participant'
-    # timestamps in ms regardless of the export unit; fixations 80 ms apart (5 samples + saccade)
     first = df[df['participant'] == 'Visitor 01'].sort_values('t')
     assert np.allclose(np.diff(first['t']), 80.)
     assert (df['dur'] == 50).all()
@@ -102,12 +101,10 @@ def test_tobii_event_export(tmp_path):
     df, mapping = load_prolab_export(path)
     assert mapping['normalized_xy'] is True and mapping['trial_col'] == 'trial' and mapping['pupil_col'] == 'pupil'
     assert set(df['stimulus']) == {'c1_r1_w1_a', 'c1_r1_w2_a'}
-    assert len(df) == 2 * 2 * 3  # 2 participants x 2 media x 3 fixations; saccade/glance rows dropped
+    assert len(df) == 2 * 2 * 3
     assert df['x'].between(0, 1).all() and (df['dur'] > 0).all()
-    assert set(df['trial']) == {1}  # interval 2 holds only a glance in the synthetic file
-    # decimal commas survived
+    assert set(df['trial']) == {1}
     assert np.isclose(df.loc[0, 'x'], 0.125)
-    # FixationData scales to the image and treats intervals as trials
     from PIL import Image
     img = tmp_path / "c1_r1_w1_a.jpg"
     Image.new('RGB', (800, 600), (90, 90, 90)).save(img)
@@ -116,12 +113,10 @@ def test_tobii_event_export(tmp_path):
     fix, sac = creapy.build_pair(df_w1, str(img), mapping)
     assert fix.width == 800 and np.isclose(fix.fix_x.min(), 0.125 * 800)
     assert fix.time_unit == 'ms' and fix.dur_unit == 'ms'
-    assert len(sac.df) == 2 * 2  # 2 participants x (3 fixations -> 2 saccades); saccades never bridge intervals
+    assert len(sac.df) == 2 * 2
 
 
 def test_tobii_data_export_drops_scene_camera_rows(tmp_path):
-    # glasses export: snapshot columns present, no 'Presented Media name' -> the scene-camera fixation points
-    # must not become a 'screen' stimulus
     path = make_prolab_export(str(tmp_path / "glasses.tsv"), snapshots=True, scene_camera=True)
     df, _ = load_prolab_data_export(path)
     assert set(df['stimulus']) == {'Wall_A', 'Wall_B'}

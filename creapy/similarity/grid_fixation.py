@@ -4,22 +4,13 @@ import pandas as pd
 from creapy.similarity.grid import Grid
 
 class FixationGrid(Grid):
-    """
-    Grid-based fixation similarity: the stimulus is split into n x n cells and two participants are compared
-    cell by cell on how much fixation weight they put there. Usually reached through
-    FixationData.compute_grid_based_fixation_similarity.
-    """
+    """Grid-based fixation similarity: the stimulus is split into n x n cells and two participants are compared."""
 
     def __init__(self, height, width, n):
         super().__init__(height, width, n)
 
     def compute_pairwise_similarities(self, df_matchable, include_self=False):
-        """
-        Pairwise fixation similarity for every pair of subjects. df_matchable has exactly the columns subject, point
-        (shapely points in pixels) and weight (summing to 1 per subject, e.g. duration shares). Per cell the score
-        is min / max of the two subjects' summed weights (NaN where neither fixated); returns a
-        PairwiseSimilarityResult. include_self=True also compares each subject with itself.
-        """
+        """Pairwise fixation similarity for every pair of subjects."""
         assert list(df_matchable) == ['subject', 'point', 'weight']
         df_inverse_matched = self.__match_with_fixation_points(df_matchable)
         callback = FixationGrid.__compute_fixation_similarities_in_grid
@@ -65,17 +56,10 @@ class FixationGrid(Grid):
         min_fix = np.minimum(w_fix_x, w_fix_y)
         max_fix = np.maximum(w_fix_x, w_fix_y)
 
-        # Avoid division by zero
         with np.errstate(divide='ignore', invalid='ignore'):
             similarities_in_grid = np.where(max_fix == 0, np.nan, min_fix / max_fix)
 
-        # overall = np.nanmean(similarity)
         return similarities_in_grid
-
-
-# The legacy saccade comparison block that used to live below (SaccadeGrid, Saccades,
-# SaccadesComparator, compute_grid_based_metrics, compute_metrics) was retired 2026-09-04,
-# superseded by the heatmatch package (SaccadeData.compute_heatmatch_similarity).
 
 
 if __name__ == '__main__':

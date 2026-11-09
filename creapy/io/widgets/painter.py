@@ -10,12 +10,11 @@ class PainterWidget(QWidget):
         self.layout = QVBoxLayout()
         self.canvas = FigureCanvas(Figure())
         self.layout.addWidget(self.canvas, stretch=1)
-        # One explanatory line under charts whose axes carry jargon (glossary.figure_caption); hidden when empty
         self.caption = QLabel()
         self.caption.setObjectName("FigureCaption")
         self.caption.setWordWrap(True)
         self.caption.setContentsMargins(10, 2, 10, 4)
-        self.caption.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)  # the canvas takes the rest
+        self.caption.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Maximum)
         self.caption.hide()
         self.layout.addWidget(self.caption, stretch=0)
         self.setLayout(self.layout)
@@ -24,14 +23,12 @@ class PainterWidget(QWidget):
         self.fade_anim = None
 
     def draw_figure(self, fig):
-        # Cross-fade: keep a snapshot of the old canvas on top of the new one
-        # and fade it out, so figure changes don't pop in
         snapshot = self.canvas.grab() if self.current_fig is not None else None
         geometry = self.canvas.geometry()
         self.layout.removeWidget(self.canvas)
         self.canvas.setParent(None)
         self.canvas = FigureCanvas(fig)
-        self.layout.insertWidget(0, self.canvas, stretch=1)  # the caption stays below
+        self.layout.insertWidget(0, self.canvas, stretch=1)
         self.current_fig = fig
         if snapshot is not None:
             self.start_cross_fade(snapshot, geometry)

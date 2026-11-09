@@ -20,18 +20,16 @@ def test_recurrence_matrix_is_symmetric_with_true_diagonal():
 
 
 def test_two_recurrent_pairs_on_one_diagonal():
-    # exactly (0, 2) and (1, 3) recur: R = 2, both on the offset-2 diagonal -> one diagonal line of length 2
     xy = np.array([[0, 0], [100, 0], [0, 1], [100, 1]], dtype=float)
     m = rqa_measures(xy, radius=5)
     assert m['n_fixations'] == 4 and m['n_recurrent_pairs'] == 2
-    assert np.isclose(m['recurrence'], 100. * 2 * 2 / (4 * 3))  # 33.3 %
+    assert np.isclose(m['recurrence'], 100. * 2 * 2 / (4 * 3))
     assert np.isclose(m['determinism'], 100.)
     assert np.isclose(m['laminarity'], 0.)
-    assert np.isclose(m['corm'], 100. * (2 + 2) / (3 * 2))  # 66.7
+    assert np.isclose(m['corm'], 100. * (2 + 2) / (3 * 2))
 
 
 def test_repeated_scanpath_gives_full_determinism():
-    # A B C A B C: pairs (0,3), (1,4), (2,5) form one diagonal line of length 3
     abc = np.array([[0, 0], [100, 0], [0, 100]], dtype=float)
     xy = np.vstack([abc, abc])
     m = rqa_measures(xy, radius=5)
@@ -43,13 +41,12 @@ def test_repeated_scanpath_gives_full_determinism():
 
 
 def test_dwelling_on_one_location_gives_laminarity():
-    # A A A B: pairs (0,1), (0,2), (1,2); vertical line in column 2 and horizontal line in row 0, both of length 2
     xy = np.array([[0, 0], [1, 0], [0, 1], [200, 200]], dtype=float)
     m = rqa_measures(xy, radius=5)
     assert m['n_recurrent_pairs'] == 3
     assert m['laminarity'] > 0
     assert np.isclose(m['laminarity'], 100. * (2 + 2) / (2 * 3))
-    assert np.isclose(m['determinism'], 100. * 2 / 3)  # (0,1),(1,2) on the first diagonal
+    assert np.isclose(m['determinism'], 100. * 2 / 3)
 
 
 def test_min_line_filters_short_lines():
@@ -62,7 +59,7 @@ def test_degenerate_inputs():
     m = rqa_measures(np.array([[0, 0]], dtype=float), radius=5)
     assert m['n_fixations'] == 1 and m['n_recurrent_pairs'] == 0
     assert all(np.isnan(m[k]) for k in ['recurrence', 'determinism', 'laminarity', 'corm'])
-    m = rqa_measures(np.array([[0, 0], [100, 100], [200, 200]], dtype=float), radius=5)  # no recurrence
+    m = rqa_measures(np.array([[0, 0], [100, 100], [200, 200]], dtype=float), radius=5)
     assert m['recurrence'] == 0 and m['n_recurrent_pairs'] == 0
     assert all(np.isnan(m[k]) for k in ['determinism', 'laminarity', 'corm'])
 
@@ -81,13 +78,12 @@ def test_cross_recurrence_symmetric_and_bounded():
 def test_participant_rqa_on_fixture(fixation_table, fixation_mapping):
     fix = FixationData(fixation_table, fixation_table['image'].iloc[0], **fixation_mapping)
     df_rqa = participant_rqa(fix)
-    assert list(df_rqa['participant'].astype(object)) == fix.subjects  # natural order: vp1, vp2, vp10
+    assert list(df_rqa['participant'].astype(object)) == fix.subjects
     assert len(df_rqa) == 3
     for col in ['n_fixations', 'recurrence', 'determinism', 'laminarity', 'corm', 'n_recurrent_pairs', 'radius']:
         assert col in df_rqa.columns
     assert df_rqa['recurrence'].between(0, 100).all()
     assert np.isclose(df_rqa['radius'].iloc[0], 0.05 * np.hypot(400, 300))
-    # trials are averaged: 25 fixations per trial (24 where the NaN sits), never the 50 of the pooled participant
     assert df_rqa['n_fixations'].between(24, 25).all()
     df_fixed = participant_rqa(fix, radius=30, min_line=3)
     assert (df_fixed['radius'] == 30).all()
@@ -97,7 +93,7 @@ def test_cross_recurrence_table_columns_and_pairs(fixation_table, fixation_mappi
     fix = FixationData(fixation_table, fixation_table['image'].iloc[0], **fixation_mapping)
     df_cr = cross_recurrence_table(fix, verbose=False)
     assert list(df_cr.columns) == ['subject_a', 'subject_b', 'cross_recurrence']
-    assert len(df_cr) == 6  # 3 participants -> 3 pairs + 3 diagonal entries
+    assert len(df_cr) == 6
     diag = df_cr[df_cr['subject_a'] == df_cr['subject_b']]
     assert len(diag) == 3 and (diag['cross_recurrence'] > 0).all()
     assert df_cr['cross_recurrence'].between(0, 1).all()

@@ -1,18 +1,11 @@
-# -*- mode: python ; coding: utf-8 -*-
-# PyInstaller spec for the creapy.io desktop app. Build from the repository root:
-#   macOS/Linux:  pyinstaller packaging/creapy_io.spec
-#   Windows:      pyinstaller packaging\creapy_io.spec
-# Output: dist/creapy.io.app (macOS) or dist/creapy.io/ with creapy.io.exe (Windows). See packaging/README.md.
 import os
 import sys
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(SPEC), '..'))
 sys.path.insert(0, ROOT)
-import creapy  # noqa: E402  (version string)
+import creapy  # noqa: E402
 
-# heatmatch may be an editable install (pip install -e ~/Projects/HeatMatch) whose import hook PyInstaller cannot
-# follow: point it at the package's parent directory and name the modules explicitly
 import heatmatch  # noqa: E402
 HEATMATCH_PARENT = os.path.dirname(os.path.dirname(os.path.abspath(heatmatch.__file__)))
 heatmatch_modules = ['heatmatch'] + ['heatmatch.' + f[:-3] for f in os.listdir(os.path.dirname(heatmatch.__file__))
@@ -49,7 +42,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    console=False,          # a windowed app; `--selftest` still prints to a terminal when started from one
+    console=False,
     icon=os.path.join(ROOT, 'packaging', 'icon.icns') if sys.platform == 'darwin' and os.path.exists(os.path.join(ROOT, 'packaging', 'icon.icns'))
     else (os.path.join(ROOT, 'packaging', 'icon.ico') if os.path.exists(os.path.join(ROOT, 'packaging', 'icon.ico')) else None),
 )

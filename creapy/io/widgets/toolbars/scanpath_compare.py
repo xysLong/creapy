@@ -6,8 +6,6 @@ import creapy.io.glossary as glossary
 
 
 class ScanpathCompareToolbar(QWidget):
-    # Classic scanpath-comparison measures between all participants: MultiMatch (five dimensions), ScanMatch,
-    # cross-recurrence. Same displays as the HeatMatch similarity view (matrix, group boxplot, viewer map).
     AVAILABLE_METHOD = {"MultiMatch (Dewhurst et al. 2012)": "multimatch",
                         "ScanMatch (Cristino et al. 2010)": "scanmatch",
                         "Cross-recurrence (Anderson et al. 2013)": "cross_recurrence"}
@@ -17,8 +15,8 @@ class ScanpathCompareToolbar(QWidget):
                        "cross_recurrence": {"Cross-recurrence rate": "cross_recurrence"}}
     AVAILABLE_VIEW = ["Similarity Matrix", "Group Boxplot", "Viewer Map (MDS)", "Measure overview"]
     AVAILABLE_GRID = [(6, 4), (8, 6), (12, 8), (16, 12), (24, 16)]
-    AVAILABLE_TEMPORAL_BIN = [None, 0.05, 0.1, 0.2]  # seconds; None = one letter per fixation
-    AVAILABLE_RADIUS = [0.02, 0.03, 0.05, 0.08, 0.12]  # share of the image diagonal
+    AVAILABLE_TEMPORAL_BIN = [None, 0.05, 0.1, 0.2]
+    AVAILABLE_RADIUS = [0.02, 0.03, 0.05, 0.08, 0.12]
     AVAILABLE_MATRIX_COLORMAP = sorted(
         [cmap for cmap in plt.colormaps() if not hasattr(plt.get_cmap(cmap), "colors")],
         key=lambda cmap: cmap.lower(),
@@ -70,7 +68,6 @@ class ScanpathCompareToolbar(QWidget):
                                                "turns scanpaths into letter strings over a grid and aligns them. "
                                                "Cross-recurrence counts how often two viewers fixated the same spots.")
 
-        # Method parameters (not auto-run: the pairwise computation is the slow part)
         self.grid_slider, self.grid_label, self.grid_title = utils.add_slider_row(
             top_layout, "ScanMatch Grid:", 0, len(self.AVAILABLE_GRID) - 1, 2, self.update_labels)
         self.bin_slider, self.bin_label, self.bin_title = utils.add_slider_row(

@@ -34,8 +34,8 @@ class SaccadeScanpathToolbar(QWidget):
 
         line1 = QFrame(self)
         line1.setObjectName("sectionSeparator")
-        line1.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line1.setFixedHeight(1)  # 1px tall
+        line1.setFrameShape(QFrame.NoFrame)
+        line1.setFixedHeight(1)
 
         middle = QWidget(self)
         middle_layout = QVBoxLayout(middle)
@@ -44,17 +44,15 @@ class SaccadeScanpathToolbar(QWidget):
 
         line2 = QFrame(self)
         line2.setObjectName("sectionSeparator")
-        line2.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line2.setFixedHeight(1)  # 1px tall
+        line2.setFrameShape(QFrame.NoFrame)
+        line2.setFixedHeight(1)
 
         bottom = QWidget(self)
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
-        # Stimulus Opacity
         self.stimulus_opacity_slider, self.stimulus_opacity_label, stimulus_title = utils.add_slider_row(
             top_layout,
             "Stimulus Opacity:",
@@ -65,20 +63,17 @@ class SaccadeScanpathToolbar(QWidget):
         )
         stimulus_title.setProperty("boldTitle", True)
 
-        # Stimulus Black-White Checkbox
         self.grayscale_checkbox = QCheckBox('Grayscale')
         self.grayscale_checkbox.setChecked(True)
         self.grayscale_checkbox.stateChanged.connect(self.update_callback)
         top_layout.addWidget(self.grayscale_checkbox)
 
-        # -------------------------------------------------------------------------
 
-        # Heatmap OOI Checkbox
         ooi_title = QLabel("Orientation of Interest (OOI):")
         ooi_title.setProperty("boldTitle", True)
         middle_layout.addWidget(ooi_title)
 
-        self.ooi_checkbox = QCheckBox('Enable OOI')  # text on the checkbox
+        self.ooi_checkbox = QCheckBox('Enable OOI')
         self.ooi_checkbox.stateChanged.connect(self.update_callback)
         middle_layout.addWidget(self.ooi_checkbox)
 
@@ -86,9 +81,7 @@ class SaccadeScanpathToolbar(QWidget):
         self.angle_dial.valueChanged.connect(self.update_callback)
         middle_layout.addWidget(self.angle_dial)
 
-        # -------------------------------------------------------------------------
 
-        # Line Opacity
         self.line_opacity_slider, self.line_opacity_label, line_title = utils.add_slider_row(
             bottom_layout,
             "Line Opacity:",
@@ -99,7 +92,6 @@ class SaccadeScanpathToolbar(QWidget):
         )
         line_title.setProperty("boldTitle", True)
 
-        # Line Color
         bottom_layout.addWidget(QLabel("Line Color:"))
         self.line_color_selector = QComboBox()
         self._default_scatter_index = 0
@@ -112,7 +104,6 @@ class SaccadeScanpathToolbar(QWidget):
         self.line_color_selector.currentIndexChanged.connect(self.update_labels_and_run)
         bottom_layout.addWidget(self.line_color_selector)
 
-        # Line Width
         self.line_width_slider, self.line_width_label, _ = utils.add_slider_row(
             bottom_layout,
             "Line Width:",
@@ -122,10 +113,8 @@ class SaccadeScanpathToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # -------------------------------------------------------------------------
 
-        # Buttons
-        self.save_btn = QPushButton("Save as Image")  # connect externally if needed
+        self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)
 
         outer.addWidget(top)

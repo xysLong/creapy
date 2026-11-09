@@ -19,7 +19,6 @@ def qapp():
 
 @pytest.fixture
 def silent_boxes(monkeypatch):
-    # No modal dialogs offscreen (they would block forever): swallow them
     for name in ['information', 'critical', 'warning']:
         monkeypatch.setattr(QMessageBox, name, lambda *a, **k: None)
     monkeypatch.setattr(QMessageBox, 'question', lambda *a, **k: QMessageBox.Yes)
@@ -35,7 +34,7 @@ def test_texts_cover_every_view():
 
 def test_every_control_has_a_tooltip(qapp, silent_boxes):
     w = gui.MainWindow(synchronous=True)
-    w.open_example()  # the workspace (toolbars, filter bar) exists only once a dataset is loaded
+    w.open_example()
     missing = []
     for name, toolbar in zip(w.VIEWS, w.view_toolbars):
         controls = [c for kind in (QSlider, QComboBox, QCheckBox, QPushButton, QListWidget)
@@ -45,17 +44,13 @@ def test_every_control_has_a_tooltip(qapp, silent_boxes):
                 missing.append((name, control.objectName() or type(control).__name__,
                                 getattr(control, 'text', lambda: '')()))
     assert missing == [], missing
-    # slider titles carry the text too, value readouts do not
     tb = w.fix_heatmap_toolbar
     assert tb.bw_method_slider.title_label.toolTip() == tb.bw_method_slider.toolTip()
     assert "Smoothing bandwidth" in tb.bw_method_slider.toolTip() and tb.bw_method_label.toolTip() == ""
-    # combos get the label placed before them
     labels = {lab.text(): lab for lab in tb.findChildren(QLabel)}
     assert labels["Contour Colormap:"].toolTip() == tb.color_selector.toolTip()
-    # filter bar and view list
     assert w.filter_bar.participant_selector.toolTip() and w.filter_bar.range_label.toolTip() == ""
     assert all(w.left_toolbar.item(i).toolTip() for i in range(w.left_toolbar.count()))
-    # the "K < 0" case must not be swallowed as an HTML tag
     assert "&lt; 0" not in glossary.TOOLTIPS['time_series']['curve_selector']
     assert "<p" in tb.bw_method_slider.toolTip()
 
@@ -63,7 +58,7 @@ def test_every_control_has_a_tooltip(qapp, silent_boxes):
 def test_explainer_dock_and_captions(qapp, silent_boxes, tmp_path):
     w = gui.MainWindow(synchronous=True)
     w.open_example()
-    w.show()  # isVisible() of the dock needs a shown window
+    w.show()
     assert not w.explainer_dock.isVisible() and not w.info_btn.isChecked()
     w.info_btn.setChecked(True)
     assert w.explainer_dock.isVisible() and "Fixation Heatmap" in w.explainer_browser.toPlainText()
@@ -72,7 +67,6 @@ def test_explainer_dock_and_captions(qapp, silent_boxes, tmp_path):
     w.explainer_dock.hide()
     assert not w.info_btn.isChecked()
 
-    # captions: none on image views, one on the charts, and the same line lands in the saved file
     w.left_toolbar.setCurrentRow(w.VIEWS.index("Fixation Heatmap"))
     w.view_runs[w.VIEWS.index("Fixation Heatmap")]()
     assert w.current_caption is None and not w.painter.caption.isVisible()
@@ -87,7 +81,6 @@ def test_explainer_dock_and_captions(qapp, silent_boxes, tmp_path):
         fig.savefig(tmp_path / "rose.png", bbox_inches="tight")
     assert len(fig.texts) == n_texts and (tmp_path / "rose.png").stat().st_size > 1000
 
-    # every chart display has a caption that mentions its jargon
     assert "s_loc" in glossary.figure_caption("Saccade Similarity", {'which': 's_loc', 'view': 'Similarity Matrix'})
     assert "MultiMatch" in glossary.figure_caption("Scanpath Comparison", {'which': 'mm_vector', 'view': 'Group Boxplot'})
     assert "Lomb" in glossary.figure_caption("Time Series", {'display': 'Periodogram', 'curve': 'Pupil Size'})

@@ -7,11 +7,6 @@ from creapy.misc.utils import natural_sorted
 
 
 class CompareDialog(QDialog):
-    """
-    Side-by-side comparison: the current view drawn once per group, per stimulus or per time window, in one figure.
-    Returns a spec {'kind': 'groups' | 'stimuli' | 'time', 'items': [...]} via get_spec().
-    """
-
     def __init__(self, stimulus_paths, grouping, t_max, parent=None, current=None):
         super().__init__(parent)
         self.setWindowTitle("Compare Side by Side")

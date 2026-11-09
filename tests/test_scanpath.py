@@ -33,7 +33,6 @@ def test_scanmatch_symmetric_and_bounded():
     s = scanmatch(p, q, W, H)
     assert np.isclose(s, scanmatch(q, p, W, H))
     assert 0. <= s <= 1.
-    # gaps cost something: aligning with a penalty never scores higher
     assert scanmatch(p, q, W, H, gap=1.) <= s + 1e-12
 
 
@@ -47,7 +46,7 @@ def test_scanmatch_temporal_binning():
 
 def test_scanmatch_offimage_fixations_clipped():
     p = random_path()
-    p[0, :2] = (-50, 1000)  # off the image, must land in a border cell without error
+    p[0, :2] = (-50, 1000)
     assert 0. <= scanmatch(p, p, W, H) <= 1.
 
 
@@ -62,7 +61,6 @@ def test_multimatch_identical_is_one():
 def test_multimatch_mirror_scores_lower():
     p = random_path()
     sims = multimatch(p, mirrored(p), W, H)
-    # the alignment follows the vector differences, so even length and duration may drop below 1 here
     for name in ['vector', 'direction', 'position']:
         assert sims[name] < 1., name
     for name in MM_MEASURES:
@@ -89,11 +87,11 @@ def test_similarity_table(fixation_table, fixation_mapping):
     assert fix.dur_unit == 'ms'
     path = scanpath_of(fix, 'vp1')
     assert path.shape == (int((fix.subj_index == 'vp1').sum()), 3)
-    assert path[:, 2].max() < 1.  # seconds, not ms
+    assert path[:, 2].max() < 1.
 
     df_sm = scanpath_similarity_table(fix, method='scanmatch', verbose=False)
     assert list(df_sm) == ['subject_a', 'subject_b', 'scanmatch']
-    assert len(df_sm) == 6  # 3 choose 2 + 3 diagonal
+    assert len(df_sm) == 6
     diag = df_sm[df_sm['subject_a'] == df_sm['subject_b']]
     assert len(diag) == 3 and np.allclose(diag['scanmatch'], 1.)
     assert df_sm['scanmatch'].between(0, 1).all()

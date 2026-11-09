@@ -27,7 +27,6 @@ def small_image(tmp_path):
 
 @pytest.fixture
 def gray_image(tmp_path):
-    # a grayscale PNG: matplotlib's imread returns a 2-D array for these, which used to break the loader
     path = tmp_path / "gray.png"
     Image.new('L', (400, 300), 128).save(path)
     return str(path)
@@ -35,7 +34,6 @@ def gray_image(tmp_path):
 
 @pytest.fixture
 def fixation_table(small_image):
-    # three participants, two of them with two trials on the same image; times in ms, EyeLink-style '.' missing
     rng = np.random.default_rng(0)
     ls = []
     for subj in ['vp1', 'vp2', 'vp10']:
@@ -49,8 +47,8 @@ def fixation_table(small_image):
                            'CURRENT_FIX_PUPIL': float(rng.normal(800, 30))})
                 t += dur + 40
     df = pd.DataFrame.from_records(ls)
-    df.loc[3, 'CURRENT_FIX_X'] = np.nan  # one missing coordinate
-    return df.sample(frac=1., random_state=1).reset_index(drop=True)  # shuffled on purpose
+    df.loc[3, 'CURRENT_FIX_X'] = np.nan
+    return df.sample(frac=1., random_state=1).reset_index(drop=True)
 
 
 @pytest.fixture
@@ -62,7 +60,6 @@ def fixation_mapping():
 
 def make_prolab_export(path, snapshots=False, unit_suffix=True, decimal_comma=False, microseconds=False,
                        scene_camera=False):
-    # A tiny Tobii Pro Lab Data-export look-alike: 2 recordings x 3 fixations x 5 samples each, 10 ms sampling
     ls = []
     for rec_idx, participant in enumerate(['Visitor 01', 'Visitor 02']):
         t = 100_000 * rec_idx
@@ -90,7 +87,6 @@ def make_prolab_export(path, snapshots=False, unit_suffix=True, decimal_comma=Fa
                     row.update({'Fixation point X': x, 'Fixation point Y': y, 'Presented Media name': 'painting.png'})
                 ls.append(row)
                 t += 10
-            # a saccade sample between fixations
             ls.append({'Recording timestamp': t, 'Participant name': participant, 'Recording name': f'Rec{rec_idx + 1}',
                        'Condition': 'c1' if rec_idx == 0 else 'c2', 'Eye movement type': 'Saccade',
                        'Eye movement type index': event_index, 'Gaze event duration': 30})
@@ -112,10 +108,8 @@ def make_prolab_export(path, snapshots=False, unit_suffix=True, decimal_comma=Fa
 
 
 def make_prolab_event_export(path):
-    # The event-based metrics export as the WOQ files have it: Fixation/Saccade/Glance rows, normalised positions,
-    # decimal commas, times restarting per interval
     ls = []
-    for participant in ['WOQ_c1_p001', 'WOQ_c1_p002']:
+    for participant in ['c1_p001', 'c1_p002']:
         for media in ['c1_r1_w1_a', 'c1_r1_w2_a']:
             for interval in [1, 2]:
                 t = 0
@@ -132,7 +126,6 @@ def make_prolab_event_export(path):
                                'Duration': 40, 'Saccade_direction': 90.0, 'Saccade_amplitude': 5.5})
                     t += 240
                 if interval == 2:
-                    # the second interval holds a glance and one fixation with an empty position -> dropped
                     ls.append({'Recording': participant, 'Participant': participant, 'Condition': 'c1',
                                'TOI': media, 'Interval': interval, 'Media': media, 'Event_type': 'Glance',
                                'Validity': 'Whole', 'EventIndex': 1, 'Start': 0, 'Stop': 900, 'Duration': 900})

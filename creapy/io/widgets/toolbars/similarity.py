@@ -12,7 +12,7 @@ class SimilarityToolbar(QWidget):
     AVAILABLE_SIGMA = [10, 50, 100, 150, 200]
     AVAILABLE_TRADEOFF = list(np.round(np.arange(0, 1.05, 0.05), 2))
     AVAILABLE_VIEW = ["Similarity Matrix", "Group Boxplot", "Viewer Map (MDS)", "Similarity over Time"]
-    AVAILABLE_WINDOWS = [3, 5, 7, 9, 11]  # number of sliding-window positions (50% overlap)
+    AVAILABLE_WINDOWS = [3, 5, 7, 9, 11]
     AVAILABLE_SCORE = {"Saccade Direction (s_dir)": "s_dir",
                        "Saccade Location (s_loc)": "s_loc"}
     AVAILABLE_MATRIX_COLORMAP = sorted(
@@ -41,8 +41,8 @@ class SimilarityToolbar(QWidget):
 
         line1 = QFrame(self)
         line1.setObjectName("sectionSeparator")
-        line1.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line1.setFixedHeight(1)  # 1px tall
+        line1.setFrameShape(QFrame.NoFrame)
+        line1.setFixedHeight(1)
 
         middle = QWidget(self)
         middle_layout = QVBoxLayout(middle)
@@ -51,18 +51,15 @@ class SimilarityToolbar(QWidget):
 
         line2 = QFrame(self)
         line2.setObjectName("sectionSeparator")
-        line2.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line2.setFixedHeight(1)  # 1px tall
+        line2.setFrameShape(QFrame.NoFrame)
+        line2.setFixedHeight(1)
 
         bottom = QWidget(self)
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
-        # Computation parameters: these do NOT auto-run (the pairwise computation is
-        # expensive): new values are applied via the Compute button.
         self.sigma_slider, self.sigma_label, sigma_title = utils.add_slider_row(
             top_layout,
             "Smoothing Bandwidth:",
@@ -82,7 +79,6 @@ class SimilarityToolbar(QWidget):
             self.update_labels
         )
 
-        # Only used by the "Similarity over Time" view
         self.windows_slider, self.windows_label, _ = utils.add_slider_row(
             top_layout,
             "Time Windows:",
@@ -96,7 +92,6 @@ class SimilarityToolbar(QWidget):
         self.compute_btn.clicked.connect(self.update_callback)
         top_layout.addWidget(self.compute_btn)
 
-        # -------------------------------------------------------------------------
 
         grouping_title = QLabel("Grouping:")
         grouping_title.setProperty("boldTitle", True)
@@ -106,10 +101,9 @@ class SimilarityToolbar(QWidget):
         self.grouping_label.setWordWrap(True)
         middle_layout.addWidget(self.grouping_label)
 
-        self.groups_btn = QPushButton("Assign Groups...")  # connect externally
+        self.groups_btn = QPushButton("Assign Groups...")
         middle_layout.addWidget(self.groups_btn)
 
-        # -------------------------------------------------------------------------
 
         display_title = QLabel("Display:")
         display_title.setProperty("boldTitle", True)
@@ -136,10 +130,8 @@ class SimilarityToolbar(QWidget):
         self.color_selector.currentIndexChanged.connect(self.update_callback)
         bottom_layout.addWidget(self.color_selector)
 
-        # -------------------------------------------------------------------------
 
-        # Buttons
-        self.save_btn = QPushButton("Save as Image")  # connect externally if needed
+        self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)
 
         outer.addWidget(top)

@@ -10,12 +10,7 @@ import itertools
 from sklearn import manifold
 
 class PairwiseSimilarityResult:
-    """
-    Result of a grid-based fixation similarity: for every pair of subjects an array with one similarity per grid
-    cell (NaN where neither looked). Offers gridshow (per-cell map on the stimulus), matshow (subject x subject
-    matrix of cell means), show_boxplot (within / between groups) and show_multidimensional_scaling (2-D
-    embedding). Not the HeatMatch result class of the same name in creapy.similarity.heatmatch_result.
-    """
+    """Result of a grid-based fixation similarity: one array of per-cell similarities per pair of subjects."""
 
     def __init__(self, mapping, subjects, cells):
         self.__subjects = subjects
@@ -42,11 +37,7 @@ class PairwiseSimilarityResult:
         return mapping
 
     def gridshow(self, path_to_stim):
-        """
-        Show the per-cell similarity over the stimulus image at path_to_stim in a 2 x 2 figure: a star glyph per
-        cell (size = number of valid pairs, colour = mean similarity, spikiness = its standard deviation) plus three
-        maps of count, mean and standard deviation with the numbers written in. Calls plt.show().
-        """
+        """Show the per-cell similarity over the stimulus image at path_to_stim in a 2 x 2 figure."""
         _matrix = []
         for subject_a, subject_b in itertools.combinations(self.__subjects, 2):
             array = self.__mapping[tuple(sorted([subject_a, subject_b]))]
@@ -56,9 +47,6 @@ class PairwiseSimilarityResult:
                 assert subject_a == subject_b
         matrix = np.array(_matrix)
         counts = (~np.isnan(matrix)).sum(axis=0)
-        # If a cell is nan in all pairwise results, a column in "matrix" would be nan in all rows
-        # Therefore, "Mean of empty slice" and "Degrees of freedom <= 0 for slice" warnings
-        # But they are not important so we filter out
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
             means = np.nanmean(matrix, axis=0)
@@ -70,7 +58,6 @@ class PairwiseSimilarityResult:
         self.__gridshow_3_axes([ax01, ax10, ax11], counts, means, stds, img=img, show_stats=True)
         fig.tight_layout()
         plt.show()
-        # plt.savefig(f"./temp/{datetime.now().strftime('%Y%m%d%H%M%S')}.png", dpi=100, bbox_inches='tight')
 
     def __gridshow_1_axis(self, ax, counts, means, stds, img, show_stats):
         PairwiseSimilarityResult.__apply_image_axes_formatting(ax, img)
@@ -157,11 +144,7 @@ class PairwiseSimilarityResult:
         return x, y
 
     def matshow(self, grouping=None):
-        """
-        Subject x subject matrix of the mean cell similarity (viridis; the diagonal is NaN unless computed with
-        include_self=True). grouping is an optional dict subject -> group name: subjects are then ordered by group
-        and the groups are framed and labelled. Calls plt.show().
-        """
+        """Subject x subject matrix of the mean cell similarity."""
         matrix, groups = self.__compute_similarity_matrix(grouping=grouping)
         labels = matrix.index
         fig, ax = plt.subplots(figsize=(10, 10))
@@ -212,18 +195,13 @@ class PairwiseSimilarityResult:
         return matrix[labels].reindex(labels), groups
 
     def show_boxplot(self, grouping):
-        """
-        Boxplots of the mean cell similarity within each group and between each pair of groups. grouping is a dict
-        subject -> group name. Calls plt.show().
-        """
+        """Boxplots of the mean cell similarity within each group and between each pair of groups."""
         similarity_matrix, groups = self.__compute_similarity_matrix(grouping=grouping)
         data = []
         labels = []
-        # Within-Group Comparison
         for group_name, group in groups.items():
             data.append([similarity_matrix.loc[s1, s2] for s1, s2 in itertools.combinations(group, 2)])
             labels.append(group_name)
-        # Between-Group Comparison
         for (group_name_1, group_1), (group_name_2, group_2) in itertools.combinations(groups.items(), 2):
             data.append([similarity_matrix.loc[s1, s2] for s1, s2 in itertools.product(group_1, group_2)])
             labels.append(f"{group_name_1}/{group_name_2}")
@@ -233,20 +211,11 @@ class PairwiseSimilarityResult:
         plt.show()
 
     def show_multidimensional_scaling(self, grouping=None):
-        """
-        Scatter the subjects in 2-D by spectral embedding of the similarity matrix (sklearn SpectralEmbedding with
-        the scores as affinities), coloured by group. grouping is a dict subject -> group name and is needed for the
-        colours despite its default of None. Calls plt.show().
-        """
+        """Scatter the subjects in 2-D by spectral embedding of the similarity matrix."""
         similarity_matrix, _ = self.__compute_similarity_matrix(grouping=grouping)
         empty_entries = np.argwhere(similarity_matrix.isna())
         assert all([empty_entry[0] == empty_entry[1] for empty_entry in empty_entries])
         similarity_matrix.fillna(value=1., inplace=True)
-        # SpectralEmbedding expects an affinity (= similarity) matrix, so the scores are passed directly
-        # (bug fixed 2026-09-04: used to convert to a dissimilarity matrix first)
-        # TSNE(n_components=2, perplexity=5, init='random', metric='precomputed')
-        # MDS(n_components=2, metric=True, n_init=1, dissimilarity='precomputed')
-        # Isomap(metric='precomputed')
         model = manifold.SpectralEmbedding(affinity='precomputed')
         dim_reduced = model.fit_transform(similarity_matrix)
         fig, ax = plt.subplots(figsize=(5, 5))

@@ -12,8 +12,6 @@ from creapy.stats import participant_table, group_comparison, coefficient_k
 
 def test_fixations_to_saccades_matches_loop(fixation_table, fixation_mapping):
     df_sac, sac_mapping = fixations_to_saccades(fixation_table, fixation_mapping)
-    # reference: the old row-by-row construction, per participant AND trial; saccades touching the fixation
-    # without coordinates are dropped by the vectorized version, so they are skipped here too
     ls = []
     m = fixation_mapping
     for (subj, trial), df_subj in fixation_table.sort_values([m['subj_index_col'], m['trial_col'], m['fix_t_col']]) \
@@ -28,7 +26,6 @@ def test_fixations_to_saccades_matches_loop(fixation_table, fixation_mapping):
     pd.testing.assert_frame_equal(got.astype({'t': float, 'x0': float, 'x1': float}),
                                   ref.astype({'t': float, 'x0': float, 'x1': float}))
     assert 'trial' in df_sac.columns and sac_mapping['trial_col'] == 'trial'
-    # no saccade jumps across a trial boundary (24 per viewing, 22 where the NaN fixation sits)
     assert df_sac.groupby(['subj', 'trial']).size().between(22, 24).all()
 
 
@@ -44,11 +41,10 @@ def test_saccades_to_fixations_roundtrip_shape(fixation_table, fixation_mapping)
 def test_fixation_data_handles_ms_shuffle_and_nan(fixation_table, fixation_mapping):
     fix = FixationData(fixation_table, fixation_table['image'].iloc[0], **fixation_mapping)
     assert fix.time_unit == 'ms' and fix.dur_unit == 'ms'
-    assert fix.t.max() < 60  # converted to seconds
-    assert fix.subjects == ['vp1', 'vp2', 'vp10']  # natural order
-    assert len(fix.df) == len(fixation_table) - 1  # the NaN coordinate row is dropped
+    assert fix.t.max() < 60
+    assert fix.subjects == ['vp1', 'vp2', 'vp10']
+    assert len(fix.df) == len(fixation_table) - 1
     assert fix.pupil_col == 'CURRENT_FIX_PUPIL'
-    # sorted by time within participant+trial
     for _, df_ in fix.df.groupby(['RECORDING_SESSION_LABEL', 'TRIAL_INDEX']):
         assert df_['CURRENT_FIX_START'].is_monotonic_increasing
 
@@ -67,7 +63,7 @@ def test_subset_by_participant_and_time(fixation_table, fixation_mapping):
     sub = fix.subset(subjects=['vp1'], t_range=(0, 2))
     assert sub.subjects == ['vp1']
     assert sub.t.max() <= 2.0 and len(sub.df) < len(fix.df)
-    assert sub.t_max == fix.t_max  # the time axis is kept so curves stay comparable
+    assert sub.t_max == fix.t_max
     with pytest.raises(AssertionError):
         fix.subset(subjects=['nobody'])
 
@@ -100,7 +96,6 @@ def test_aoi_metrics_and_records(fixation_table, fixation_mapping):
     assert np.isclose(left['aoi_area_share'].iloc[0], 0.5)
     rec = fix.areas_of_interest['tri'].to_record()
     assert AOI.from_record(rec).area() == pytest.approx(fix.areas_of_interest['tri'].area())
-    # the whole image: every fixation inside the image counts
     fix.set_top_down_aoi('all', AOI.rectangle('all', 0, 0, 400, 300).geom)
     df_all = fix.aoi_metrics(names=['all'])
     assert np.allclose(df_all['dwell_share'], 1.)
@@ -115,9 +110,9 @@ def test_participant_table_and_groups(fixation_table, fixation_mapping):
     assert {'n_fixations', 'mean_fixation_duration', 'n_saccades', 'coefficient_K', 'mean_pupil'} <= set(df_stats.columns)
     assert df_stats['coefficient_K'].notna().all()
     cmp = group_comparison(df_stats, {'vp1': 'A', 'vp2': 'B', 'vp10': 'A'})
-    assert 'mean_A' in cmp.columns and (cmp['test'] == 'n/a').all()  # too few per group for a test
+    assert 'mean_A' in cmp.columns and (cmp['test'] == 'n/a').all()
     k, k_subj = coefficient_k([100, 300, 200, 400], [50, 10, 30, 10], ['a', 'a', 'b', 'b'])
-    assert k_subj['b'] > k_subj['a']  # longer fixations + shorter saccades = more focal
+    assert k_subj['b'] > k_subj['a']
 
 
 def test_example_dataset_builds(example_csv):
@@ -127,12 +122,11 @@ def test_example_dataset_builds(example_csv):
 
 
 def test_subset_keeps_coordinates_on_downscaled_images(fixation_table, fixation_mapping, tmp_path):
-    # an 8k-style image is downscaled on loading; a participant subset must not scale the coordinates again
     from PIL import Image
     big = tmp_path / "big.jpg"
     Image.new('RGB', (4800, 3200), (100, 100, 100)).save(big, quality=60)
     df = fixation_table.assign(image=str(big))
-    df['CURRENT_FIX_X'] = df['CURRENT_FIX_X'] * 12  # spread over the 4800 px width
+    df['CURRENT_FIX_X'] = df['CURRENT_FIX_X'] * 12
     df['CURRENT_FIX_Y'] = df['CURRENT_FIX_Y'] * 10
     fix = FixationData(df, str(big), **fixation_mapping)
     assert fix.width == 2400 and fix.scale == pytest.approx(0.5)
@@ -141,7 +135,6 @@ def test_subset_keeps_coordinates_on_downscaled_images(fixation_table, fixation_
     assert sub.fix_x.max() == pytest.approx(fix.fix_x[fix.subj_index == 'vp1'].max())
     sub_t = fix.subset(t_range=(0, 3))
     assert sub_t.fix_x.max() <= fix.width and sub_t.fix_x.max() > fix.width * 0.3
-    # normalised Tobii coordinates land on the array once, subsets keep them
     df_norm = fixation_table.assign(image=str(big))
     df_norm['CURRENT_FIX_X'] = df_norm['CURRENT_FIX_X'] / 400.
     df_norm['CURRENT_FIX_Y'] = df_norm['CURRENT_FIX_Y'] / 300.

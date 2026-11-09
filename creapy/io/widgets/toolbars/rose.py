@@ -5,7 +5,6 @@ import creapy.io.glossary as glossary
 
 
 class RoseToolbar(QWidget):
-    # Saccade direction histogram ("rose diagram"): share of saccades per direction bin, participants weighted equally
     AVAILABLE_BINS = [8, 12, 16, 24, 36, 72]
     AVAILABLE_COLORMAP = sorted(
         [cmap for cmap in plt.colormaps() if not hasattr(plt.get_cmap(cmap), "colors")],

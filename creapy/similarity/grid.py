@@ -7,10 +7,7 @@ from tqdm import tqdm
 from creapy.similarity.grid_result import PairwiseSimilarityResult
 
 class Grid:
-    """
-    Square n x n grid over a stimulus of height x width pixels (cell edges rounded to whole pixels). cells is the
-    list of shapely cell polygons in row-major order. Base class of FixationGrid.
-    """
+    """Square n x n grid over a stimulus of height x width pixels (cell edges rounded to whole pixels)."""
 
     def __init__(self, height, width, n):
         v_grid = np.linspace(0, height, n + 1).round().astype(int)
@@ -25,11 +22,7 @@ class Grid:
             self.cells.append(cell)
 
     def actually_compute_pairwise_similarities(self, df_inverse_matched, callback, include_self=False):
-        """
-        Run callback(cell_values_1, cell_values_2) for every pair of subjects in df_inverse_matched (columns subject,
-        cell, cell_values) and collect the per-cell similarity arrays in a PairwiseSimilarityResult. include_self=True
-        also compares each subject with itself. Used by FixationGrid; rarely called directly.
-        """
+        """Run callback(cell_values_1, cell_values_2) for every pair of subjects in df_inverse_matched."""
         combinator = itertools.combinations_with_replacement if include_self else itertools.combinations
         grouped_by_subject = df_inverse_matched.groupby('subject')
         combinations = list(combinator(grouped_by_subject, 2))

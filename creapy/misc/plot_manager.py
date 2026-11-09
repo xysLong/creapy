@@ -8,10 +8,7 @@ plt.rcParams['font.family'] = 'Arial Narrow'
 
 
 class FixationDatasetPlotManager:
-    """
-    One FixationData per stimulus from a fixation table, for quick overview plots in a notebook.
-    `datasets` maps the stimulus value (the image path) to its FixationData.
-    """
+    """One FixationData per stimulus from a fixation table, for quick overview plots in a notebook."""
 
     def __init__(self, df, stim_col, x_col, y_col, t_col, subj_col, duration_col):
         self.datasets = {}
@@ -21,12 +18,7 @@ class FixationDatasetPlotManager:
             self.datasets[path_to_stim] = dm
 
     def plot(self, which='heatmaps', layout='auto', **kwargs):
-        """
-        Show every stimulus at once. `which`: 'heatmaps' (fixation KDE) or 'duration' (fixation-duration curve
-        over time). `layout`: 'single' (one figure per stimulus, stimulus image beside it), 'auto' (square grid),
-        an int (that many columns) or 'overlay' (all duration curves in one axes, duration only). kwargs go to
-        make_heatmap / make_v_curve_by_time. Figures are shown with plt.show() and closed afterwards.
-        """
+        """Show every stimulus at once."""
         assert which in ['heatmaps', 'duration']
 
         if isinstance(layout, str):

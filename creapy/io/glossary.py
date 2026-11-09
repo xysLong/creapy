@@ -1,23 +1,3 @@
-"""
-Every explanatory text of the GUI in one place, so the wording can be reviewed (and translated) without touching
-the widgets. Qt-free.
-
-Three layers, cheapest first:
-  * TOOLTIPS:   one or two sentences per control, shown on hover. They say what changing the control does to the
-                 picture, not what the parameter is called in the literature.
-  * EXPLAINERS: one page per view (what it shows, how to read it, the parameters, a reference), shown in the
-                 "About this view" panel that the ⓘ button opens and kept while the user works.
-  * CAPTIONS:   one line under charts whose axes carry jargon (s_loc, REC %, mm_vector ...), also written into
-                 saved figures.
-
-Wording rule: describe effects neutrally ("wider blur merges hot spots"), never recommend a
-setting ("use 0.1"). The Fixation Heatmap canvas itself stays untouched (no caption, no participant count).
-"""
-
-# ------------------------------------------------------------------------------------------------------------------
-# One line per view, for the view list on the left (hover) and the header of the parameter panel
-# ------------------------------------------------------------------------------------------------------------------
-
 VIEW_SUMMARY = {
     "Fixation Heatmap": "Where people looked: a smoothed density of fixations, weighted by their duration.",
     "Fixation Scanpath": "The order in which one person looked: numbered circles, sized by fixation duration.",
@@ -32,9 +12,6 @@ VIEW_SUMMARY = {
     "Statistics": "One row per participant: counts, means, coefficient K; group tests; AOI metrics.",
 }
 
-# ------------------------------------------------------------------------------------------------------------------
-# Tooltips, keyed by toolbar and by the attribute name of the control (utils.apply_tooltips sets them)
-# ------------------------------------------------------------------------------------------------------------------
 
 STIMULUS_TIPS = {
     'stimulus_opacity_slider': "How strongly the image shows through. 0% hides the image and leaves only the data.",
@@ -204,9 +181,6 @@ FILTER_TIPS = {
     'reset_btn': "Back to all participants and the whole viewing time.",
 }
 
-# ------------------------------------------------------------------------------------------------------------------
-# Explainers: one HTML page per view for the "About this view" panel
-# ------------------------------------------------------------------------------------------------------------------
 
 EXPLAINERS = {
     "Fixation Heatmap": """
@@ -346,9 +320,6 @@ for multiple comparisons and report effect sizes.</p>
 """,
 }
 
-# ------------------------------------------------------------------------------------------------------------------
-# Captions under charts whose axes carry jargon (not for image views; the heatmap canvas stays untouched)
-# ------------------------------------------------------------------------------------------------------------------
 
 SCORE_CAPTIONS = {
     's_loc': "s_loc = location similarity: 1 when two viewers make their saccades in the same places, 0 when nowhere "
@@ -392,7 +363,7 @@ RQA_CAPTIONS = {
                                          "cluster.",
     "RQA table": "REC = share of recurring fixation pairs, DET = share in repeated sequences, LAM = share in dwelling, "
                  "CORM = centre of recurrence mass (early vs late returns); Anderson et al. 2013.",
-    "Boxplot by group": None,  # filled from the measure
+    "Boxplot by group": None,
 }
 
 RQA_MEASURE_CAPTIONS = {
@@ -404,8 +375,6 @@ RQA_MEASURE_CAPTIONS = {
 
 
 def figure_caption(view, params):
-    # One plain-text line for the chart of `view` drawn with `params`, or None when the view needs none
-    # (image views: heatmaps, scanpaths, the AOI image)
     if view == "Saccade Directions":
         return ("Share of saccades per direction sector (0° = to the right, 90° = upwards); every participant "
                 "weighted equally." + (" Opposite directions folded together." if params.get('center_symmetric')
@@ -447,5 +416,4 @@ def figure_caption(view, params):
 
 
 def view_by_view_html():
-    # The explainers concatenated, appended to the "Analyses explained" help page so both share one text
     return "<h2>View by view</h2>" + "".join(EXPLAINERS[view] for view in VIEW_SUMMARY)

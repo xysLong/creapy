@@ -1,17 +1,11 @@
-"""
-Writes docs/LIBRARY.md: the hand-written introduction below followed by an API reference generated from the
-docstrings of the public library modules (python docs/make_library_reference.py). Run it after changing the
-library so the reference never drifts from the code.
-"""
 import inspect
 import importlib
 import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.dirname(HERE))  # the repo root, so the script works without an installed creapy
+sys.path.insert(0, os.path.dirname(HERE))
 
-# module -> one-line role; order = order in the document
 MODULES = [
     ('creapy', "top level: loading tables, building datasets, re-exports of everything below"),
     ('creapy.gaze.base', "StimulusGaze: what FixationData and SaccadeData share (subsets, AOIs, smoothing)"),
@@ -129,7 +123,6 @@ def signature(obj):
 
 
 def doc(obj):
-    # one paragraph per docstring: the docstrings' line breaks would break a Markdown list item
     d = inspect.getdoc(obj)
     return " ".join(d.split()) if d else "*(no docstring)*"
 

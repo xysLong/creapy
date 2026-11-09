@@ -56,9 +56,9 @@ from creapy.aoi.aoi import AOI
 HERE = os.path.dirname(os.path.abspath(__file__))
 STYLE_DIR = os.path.join(HERE, 'style')
 
-DEV_MODE = bool(os.environ.get("CREAPY_DEV_TABLE"))  # developer start: open this fixation table at once; also prints tracebacks
-SYNCHRONOUS = False  # True: computations run inline instead of in a worker thread (tests, self-test)
-CHUNKED_IMPORT_BYTES = 1_500_000_000  # Data exports above this are read in chunks (the WOQ room files are 70 GB)
+DEV_MODE = bool(os.environ.get("CREAPY_DEV_TABLE"))
+SYNCHRONOUS = False
+CHUNKED_IMPORT_BYTES = 1_500_000_000
 
 
 def style(name):
@@ -81,17 +81,17 @@ class MainWindow(QMainWindow):
         self.dataset_fix = None
         self.dataset_sac = None
         self.source_name = None
-        self.source_path = None  # table file behind the workspace (for project files)
+        self.source_path = None
         self.project_path = None
         self.save_dir = QStandardPaths.writableLocation(QStandardPaths.PicturesLocation)
-        self.current_table = None  # the DataFrame behind the current table view (for Export Table)
-        self.current_caption = None  # the explanatory line under the current chart (also written on save)
+        self.current_table = None
+        self.current_caption = None
         self.current_axes_kind = 'image'
         self.current_path = None
-        self.drawing = None  # AOI drawing state (see run_aoi)
+        self.drawing = None
         self.canvas_connections = []
-        self.compare = None  # side-by-side spec {'kind', 'items'} or None
-        self.undo_stack = []  # (label, undo_fn, redo_fn)
+        self.compare = None
+        self.undo_stack = []
         self.redo_stack = []
         self.init_menu()
         if DEV_MODE:
@@ -103,13 +103,10 @@ class MainWindow(QMainWindow):
             self.init_start_ui()
         self.log.log('app_start', version=creapy.__version__)
 
-    # =====================================================================================
-    # Menu, status bar, help
-    # =====================================================================================
 
     def init_menu(self):
         menubar = self.menuBar()
-        menubar.setNativeMenuBar(False)  # same look on macOS and Windows, and visible in screenshots
+        menubar.setNativeMenuBar(False)
 
         file_menu = menubar.addMenu("&File")
         file_menu.addAction(self.make_action("Import Fixation Table…", lambda: self.import_dataset(True), "Ctrl+O"))
@@ -223,7 +220,6 @@ class MainWindow(QMainWindow):
         self.log.close()
         super().closeEvent(event)
 
-    # ---------- undo / redo (AOI edits and group assignments) ----------
 
     def push_undo(self, label, undo_fn, redo_fn):
         self.undo_stack.append((label, undo_fn, redo_fn))
@@ -257,12 +253,8 @@ class MainWindow(QMainWindow):
         self.redo_action.setEnabled(bool(self.redo_stack))
         self.redo_action.setText(f"Redo {self.redo_stack[-1][0]}" if self.redo_stack else "Redo")
 
-    # =====================================================================================
-    # Start screen
-    # =====================================================================================
 
     def init_start_ui(self):
-        # self.setStyleSheet(style("start_light.qss"))
         self.setStyleSheet(style("start_dark.qss"))
         central = QWidget()
         self.setCentralWidget(central)
@@ -271,7 +263,6 @@ class MainWindow(QMainWindow):
         main_layout.setContentsMargins(40, 30, 40, 30)
         main_layout.setSpacing(24)
 
-        # ---------- HEADER ----------
         header_layout = QVBoxLayout()
         header_layout.setAlignment(Qt.AlignLeft | Qt.AlignTop)
 
@@ -287,7 +278,6 @@ class MainWindow(QMainWindow):
         header_layout.addWidget(subtitle_label)
         main_layout.addLayout(header_layout)
 
-        # ---------- THREE CARDS ----------
         cards_layout = QHBoxLayout()
         cards_layout.setSpacing(20)
 
@@ -389,9 +379,6 @@ class MainWindow(QMainWindow):
         logo.setPixmap(pix)
         return logo
 
-    # =====================================================================================
-    # Import
-    # =====================================================================================
 
     def pick_table_file(self, title):
         path, _ = QFileDialog.getOpenFileName(
@@ -422,7 +409,6 @@ class MainWindow(QMainWindow):
         if path is None:
             return
         if os.path.getsize(path) > CHUNKED_IMPORT_BYTES:
-            # too large to read whole: only a Tobii Data export makes sense at this size
             self.import_tobii(path=path)
             return
         df = self.read_table_or_complain(path)
@@ -466,7 +452,6 @@ class MainWindow(QMainWindow):
                 return
         chunked = df is None and os.path.getsize(path) > CHUNKED_IMPORT_BYTES
         if chunked:
-            # a whole-room Data export: read only the needed columns, chunk by chunk, with a cancellable progress bar
             size_gb = os.path.getsize(path) / 1e9
             progress = QProgressDialog(f"Reading the {size_gb:.1f} GB export in chunks: this takes a while "
                                        "(about a minute per gigabyte) …", "Cancel", 0, 1000, self)
@@ -527,7 +512,6 @@ class MainWindow(QMainWindow):
                            detected=detected, mapping=mapping, source_path=path, source_kind='tobii')
 
     def open_aoi_metrics(self, path=None, df=None):
-        # Tobii AOI-based metrics export -> table window (no stimuli involved, independent of the workspace)
         if path is None:
             path = self.pick_table_file("Open Tobii Pro Lab AOI-based Metrics Export")
             if path is None:
@@ -553,23 +537,21 @@ class MainWindow(QMainWindow):
             dialog = ColumnMappingDialog(df, is_fixation=is_fixation, mapping=mapping, parent=self, detected=detected)
             if not dialog.exec():
                 return False
-            mapping = dict(mapping or {}, **dialog.get_mapping())  # keeps loader flags such as normalized_xy
+            mapping = dict(mapping or {}, **dialog.get_mapping())
         try:
             stim_col = mapping['stim_col']
             df = df[df[stim_col].notna()]
             groups = dict(list(df.groupby(stim_col)))
             if stim_2_path is None:
                 stim_2_path = self.resolve_stimulus_paths(list(groups))
-            if stim_2_path is None:  # user cancelled the folder selection
+            if stim_2_path is None:
                 return False
             stim_2_df = {stim_2_path[stim]: df_stim for stim, df_stim in groups.items() if stim in stim_2_path}
-            # The busy pill only exists once the workspace is built: a wait
-            # cursor covers the thumbnail loading until then
             with self.wait_cursor():
                 self.setup_workspace(stim_2_df, mapping, is_fixation, source_name=source_name)
             self.source_path = source_path
             self.source_kind = source_kind
-            self.stim_values = {path: stim for stim, path in stim_2_path.items() if stim in groups}  # path -> table value
+            self.stim_values = {path: stim for stim, path in stim_2_path.items() if stim in groups}
             self.log.log('import', source=source_name, format=detected, is_fixation=is_fixation,
                          n_rows=len(df), n_stimuli=len(stim_2_df), mapping=mapping)
             return True
@@ -591,7 +573,6 @@ class MainWindow(QMainWindow):
                 path = example_dataset()
                 df, mapping = creapy.load_fixations(path)
             stim_2_df = {stim: df_stim for stim, df_stim in df.groupby(mapping['stim_col'])}
-            # example rows carry paths relative to the examples folder
             folder = os.path.dirname(path)
             stim_2_path = {stim: os.path.join(folder, os.path.basename(str(stim))) for stim in stim_2_df}
             stim_2_df = {stim_2_path[stim]: df_stim for stim, df_stim in stim_2_df.items()}
@@ -610,8 +591,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Example Failed", f"The example dataset could not be opened.\n\nTechnical detail: {e}")
 
     def resolve_stimulus_paths(self, stim_values, folder=None):
-        # stim value in the table -> local image path; missing entries trigger a folder picker, then
-        # the names from the table are matched (case-insensitively, with or without extension) against the folder.
         resolved = {stim: str(stim) for stim in stim_values if os.path.isfile(str(stim))}
         missing = [stim for stim in stim_values if stim not in resolved]
 
@@ -628,9 +607,9 @@ class MainWindow(QMainWindow):
                 return None
             self.image_folder = folder
             with self.wait_cursor():
-                folder_files = find_images(folder)  # subfolders included (WOQ keeps snapshots per room)
+                folder_files = find_images(folder)
             for stim in missing:
-                file_name = os.path.basename(str(stim).replace('\\', '/')).lower()  # tolerate Windows paths
+                file_name = os.path.basename(str(stim).replace('\\', '/')).lower()
                 stem = os.path.splitext(file_name)[0]
                 if file_name in folder_files:
                     resolved[stim] = folder_files[file_name]
@@ -653,9 +632,6 @@ class MainWindow(QMainWindow):
                 f"The following stimuli were not found in the selected folder and will be skipped:\n\n{names}")
         return resolved
 
-    # =====================================================================================
-    # Projects (table path + mapping + images + groups + AOIs, no gaze data)
-    # =====================================================================================
 
     def project_state(self):
         sizes = {path: (fix.width, fix.height) for path, (fix, _) in self.base_cache.items()}
@@ -731,7 +707,6 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Open Failed", f"The project's table could not be read.\n\nTechnical detail: {e}")
             return
         mapping = state['mapping']
-        # stimulus values -> image paths: stored paths first, then the stored image folder, then ask
         stim_2_path = {}
         for entry in state.get('stimuli', []):
             img = project_io.relocate(entry['path'], project_dir)
@@ -745,7 +720,6 @@ class MainWindow(QMainWindow):
             if resolved is None:
                 return
             stim_2_path.update(resolved)
-        # the table's stimulus column may hold non-string values: map through str
         by_str = {str(v): v for v in df[mapping['stim_col']].dropna().unique()}
         stim_2_path = {by_str[v]: p for v, p in stim_2_path.items() if v in by_str}
         ok = self.finish_import(df, is_fixation=state['is_fixation'], source_name=state.get('source_name'),
@@ -755,7 +729,6 @@ class MainWindow(QMainWindow):
             return
         self.project_path = path
         self.add_recent_project(path)
-        # groups and AOIs
         grouping = state.get('grouping') or None
         if grouping:
             by_str = {str(s): s for s in self.all_subjects}
@@ -793,33 +766,27 @@ class MainWindow(QMainWindow):
         for p in recent:
             self.recent_menu.addAction(self.make_action(os.path.basename(p), lambda _=False, p=p: self.open_project(p)))
 
-    # =====================================================================================
-    # Workspace
-    # =====================================================================================
 
     def setup_workspace(self, stim_2_df, mapping, is_fixation, source_name=None):
-        # One imported table serves all its stimuli: datasets are built lazily on the first click of each
-        # thumbnail and cached, so the import stays fast and the expensive similarity caches (which live on the
-        # dataset objects) survive stimulus switches. Filtered views (participants / time window) are cached too.
         self.jobs.cancel()
-        self.stim_dfs = stim_2_df  # stimulus path -> table rows for that stimulus
+        self.stim_dfs = stim_2_df
         self.stim_values = {path: path for path in stim_2_df}
         self.mapping = mapping
         self.is_fixation = is_fixation
         self.source_name = source_name
         self.project_path = None
-        self.base_cache = {}  # stimulus path -> (FixationData, SaccadeData) of everything
-        self.filtered_cache = {}  # (stimulus path, filter key) -> (FixationData, SaccadeData)
-        self.aois = {}  # stimulus path -> {name -> AOI}, shared by every dataset object of that stimulus
+        self.base_cache = {}
+        self.filtered_cache = {}
+        self.aois = {}
         self.dataset_fix = None
         self.dataset_sac = None
         self.current_path = None
-        self.grouping = None  # subj -> group name, set via GroupingDialog
+        self.grouping = None
         self.compare = None
         self.undo_stack.clear()
         self.redo_stack.clear()
         self.update_undo_actions()
-        self.similarity_confirmed = set()  # (stimulus, sigma, tradeoff, view) the user accepted as a long computation
+        self.similarity_confirmed = set()
         self.all_subjects = creapy.natural_sorted(
             pd.concat([df[mapping['subj_index_col']] for df in stim_2_df.values()]).dropna().unique())
         self.init_main_layout()
@@ -831,11 +798,8 @@ class MainWindow(QMainWindow):
         self.set_workspace_actions_enabled(True)
 
     def init_main_layout(self):
-        # self.setStyleSheet(style("main_light.qss"))
         self.setStyleSheet(style("main_dark.qss"))
 
-        # Renders never run inside a click or slider handler: schedule_render defers them through this timer.
-        # That collapses bursts (a slider drag fires once per tick) and lets the GUI repaint first.
         self.pending_run = lambda: None
         self.render_timer = QTimer(self)
         self.render_timer.setSingleShot(True)
@@ -861,7 +825,6 @@ class MainWindow(QMainWindow):
         self.recurrence_toolbar = RecurrenceToolbar(self.debounced("Recurrence"))
         self.stats_toolbar = StatisticsToolbar(self.debounced("Statistics"))
 
-        # Same order as the left_toolbar rows / VIEWS
         self.view_toolbars = [self.fix_heatmap_toolbar, self.fix_scanpath_toolbar, self.sac_scanpath_toolbar,
                               self.sac_heatmap_toolbar, self.rose_toolbar, self.aoi_toolbar,
                               self.time_series_toolbar, self.similarity_toolbar, self.scanpath_compare_toolbar,
@@ -886,7 +849,6 @@ class MainWindow(QMainWindow):
         for toolbar in self.view_toolbars:
             self.right_toolbar_stack.addWidget(toolbar)
 
-        # Header over the parameter panel: the view's name and the ⓘ button that opens the explainer panel
         self.panel_title = QLabel(self.VIEWS[0])
         self.panel_title.setObjectName("PanelTitle")
         self.info_btn = QToolButton()
@@ -911,7 +873,6 @@ class MainWindow(QMainWindow):
         right_layout.addWidget(self.right_toolbar_stack)
         self.right_panel.setFixedWidth(250)
 
-        # The explainer: one page per view (glossary.EXPLAINERS) in a dock the user can keep open, move or float
         self.explainer_browser = QTextBrowser()
         self.explainer_browser.setOpenExternalLinks(True)
         self.explainer_browser.setMinimumWidth(280)
@@ -923,7 +884,6 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, self.explainer_dock)
         self.explainer_dock.hide()
 
-        # Fade-in for the parameter panel on view switches
         self.toolbar_effect = QGraphicsOpacityEffect(self.right_toolbar_stack)
         self.toolbar_effect.setOpacity(1.0)
         self.right_toolbar_stack.setGraphicsEffect(self.toolbar_effect)
@@ -939,11 +899,9 @@ class MainWindow(QMainWindow):
         self.main_area.addWidget(self.painter)
         self.main_area.addWidget(self.table_view)
 
-        # Thumbnail strip above the canvas: click to switch between stimuli
         self.stimulus_strip = StimulusStrip(list(self.stim_dfs))
         self.stimulus_strip.stimulus_selected.connect(self.on_stimulus_selected)
 
-        # Filter bar: participants + time window, applied to every view
         self.filter_bar = FilterBar()
         self.filter_bar.set_subjects(self.all_subjects, self.grouping)
         self.filter_bar.filter_changed.connect(self.on_filter_changed)
@@ -957,7 +915,6 @@ class MainWindow(QMainWindow):
         canvas_layout.addWidget(self.filter_bar)
         canvas_layout.addWidget(self.main_area)
 
-        # Status pill over the canvas while a computation runs in the worker thread, with a Cancel button
         self.busy_frame = QFrame(self.canvas_area)
         self.busy_frame.setObjectName("BusyPill")
         self.busy_frame.setStyleSheet(
@@ -981,7 +938,6 @@ class MainWindow(QMainWindow):
         self.busy_fade.setStartValue(1.0)
         self.busy_fade.setEndValue(0.0)
         self.busy_fade.finished.connect(self.busy_frame.hide)
-        # the pill appears only when a job takes longer than a blink, so slider ticks on fast views do not flash
         self.busy_timer = QTimer(self)
         self.busy_timer.setSingleShot(True)
         self.busy_timer.setInterval(180)
@@ -996,15 +952,12 @@ class MainWindow(QMainWindow):
 
         self.setCentralWidget(splitter)
 
-        # AOI drawing state (see run_aoi)
         self.drawing = None
         self.canvas_connections = []
 
-        # Load the first stimulus (currentRow is still -1, so nothing renders yet), then trigger the default view
         self.stimulus_strip.select(next(iter(self.stim_dfs)))
         self.left_toolbar.setCurrentRow(0)
 
-    # ---------- datasets ----------
 
     def build_base(self, path):
         dataset_fix, dataset_sac = creapy.build_pair(self.stim_dfs[path], path, self.mapping, self.is_fixation)
@@ -1012,14 +965,11 @@ class MainWindow(QMainWindow):
         return dataset_fix, dataset_sac
 
     def base_datasets(self, path):
-        # (FixationData, SaccadeData) of everything on a stimulus, built on first use (also from the worker thread;
-        # a dict assignment is atomic and a double build is merely wasted work)
         if path not in self.base_cache:
             self.base_cache[path] = self.build_base(path)
         return self.base_cache[path]
 
     def datasets_for(self, path, subjects=None, t_range=None):
-        # Filtered datasets of any stimulus, cached per (stimulus, selection)
         key = (tuple(subjects) if subjects is not None else None, t_range)
         base_fix, base_sac = self.base_datasets(path)
         if key == (None, None):
@@ -1048,7 +998,7 @@ class MainWindow(QMainWindow):
                     "Please check that the column mapping matches your table (e.g., coordinate columns contain "
                     "numbers) and that the image file can be opened.\n\n"
                     f"Technical detail: {e}")
-                if self.current_path is not None:  # revert the highlight to the working stimulus
+                if self.current_path is not None:
                     self.stimulus_strip.mark(self.current_path)
                 return
         self.current_path = path
@@ -1057,8 +1007,6 @@ class MainWindow(QMainWindow):
         self.aoi_toolbar.set_aois(self.aois.setdefault(path, {}).keys())
         self.log.log('stimulus_selected', stimulus=os.path.basename(path))
         self.refresh_current_datasets()
-        # The parameter toolbars deliberately keep their current settings across stimulus switches:
-        # identical settings make stimuli comparable.
         self.schedule_current_view(delay=30)
 
     def refresh_current_datasets(self):
@@ -1089,7 +1037,6 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'filter_bar'):
             self.filter_bar.reset()
 
-    # ---------- plumbing ----------
 
     def schedule_render(self, fn, delay):
         self.pending_run = fn
@@ -1101,8 +1048,6 @@ class MainWindow(QMainWindow):
             self.schedule_render(self.view_runs[row], delay=delay)
 
     def debounced(self, view_name):
-        # Toolbar callback wrapper: parameter changes only schedule the render, so a burst of them
-        # (a slider drag) results in a single one.
         def request(*_):
             self.schedule_render(lambda: self.run_view(view_name), delay=200)
         return request
@@ -1128,7 +1073,7 @@ class MainWindow(QMainWindow):
                              self.stimulus_strip.height() + self.filter_bar.height() + 16)
         self.busy_frame.show()
         self.busy_frame.raise_()
-        self.busy_frame.repaint()  # synchronous paint: the pill must never be skipped
+        self.busy_frame.repaint()
 
     def show_busy_soon(self, message):
         self.busy_pending_text = message
@@ -1141,7 +1086,6 @@ class MainWindow(QMainWindow):
 
     @contextmanager
     def busy_now(self, message):
-        # For the few things that still block the GUI thread (image loading, drawing): pill + wait cursor
         self.show_busy(message, cancellable=False)
         QApplication.setOverrideCursor(Qt.WaitCursor)
         QApplication.processEvents(QEventLoop.ExcludeUserInputEvents)
@@ -1177,25 +1121,23 @@ class MainWindow(QMainWindow):
 
     @contextmanager
     def guarded(self, view_name):
-        # Every draw runs inside this: no traceback ever reaches the user, every failure is logged
         t0 = time.time()
         try:
             yield
             self.log.log('render', view=view_name, seconds=round(time.time() - t0, 3))
-        except Exception as e:  # noqa: BLE001  (reported to the user in words)
+        except Exception as e:  # noqa: BLE001
             self.report_view_error(view_name, e)
 
     def change_analysis_view(self, index):
-        self.render_timer.stop()  # a pending render would be for the previous view
+        self.render_timer.stop()
         self.cancel_drawing()
         if index < 0:
             return
         self.right_toolbar_stack.setCurrentWidget(self.view_toolbars[index])
         self.panel_title.setText(self.VIEWS[index])
-        if not self.explainer_dock.isHidden():  # isVisible() is false while the window itself is hidden
+        if not self.explainer_dock.isHidden():
             self.update_explainer()
         self.log.log('view', view=self.VIEWS[index])
-        # The render is deferred so the click can repaint and the panel fade in before the computation starts
         self.toolbar_fade.stop()
         self.toolbar_fade.start()
         self.schedule_render(self.view_runs[index], delay=160)
@@ -1208,7 +1150,6 @@ class MainWindow(QMainWindow):
         plt.close(fig)
         self.current_table = None
 
-    # ---------- explanations ----------
 
     def current_view_name(self):
         row = self.left_toolbar.currentRow()
@@ -1224,7 +1165,6 @@ class MainWindow(QMainWindow):
             self.explainer_dock.hide()
 
     def on_explainer_visibility(self, visible):
-        # closing the dock via its title bar must release the button too
         self.info_btn.blockSignals(True)
         self.info_btn.setChecked(visible)
         self.info_btn.blockSignals(False)
@@ -1239,8 +1179,6 @@ class MainWindow(QMainWindow):
     @staticmethod
     @contextmanager
     def caption_on_figure(fig, caption, axes_kind):
-        # Writes the caption under the figure for the duration of a savefig (bbox_inches='tight' includes it);
-        # image views (heatmaps, scanpaths) get none: their canvas stays untouched
         text = None
         if caption and axes_kind != 'image':
             text = fig.text(0.01, -0.012, caption, ha='left', va='top', fontsize=7.5, color='#a0a4b3', wrap=True)
@@ -1256,7 +1194,6 @@ class MainWindow(QMainWindow):
         self.current_table = df
 
     def selection_note(self):
-        # One line describing the active filter, for figure titles and table captions
         parts = []
         if self.filter_bar.participants() is not None:
             parts.append(self.filter_bar.selection_label())
@@ -1265,9 +1202,6 @@ class MainWindow(QMainWindow):
             parts.append(f"{t0:.1f}–{t1:.1f} s")
         return " · ".join(parts)
 
-    # =====================================================================================
-    # Views, one generic runner: prepare in the worker thread, draw on the GUI thread
-    # =====================================================================================
 
     def toolbar_for(self, view_name):
         return self.view_toolbars[self.VIEWS.index(view_name)]
@@ -1288,7 +1222,6 @@ class MainWindow(QMainWindow):
         return ctx
 
     def panels(self, view_name):
-        # [(panel title or None, fix, sac)]: one panel normally, several in compare mode
         if not self.compare or view_name not in COMPARABLE_VIEWS:
             return [(None, self.dataset_fix, self.dataset_sac)]
         kind, items = self.compare['kind'], self.compare['items']
@@ -1307,8 +1240,8 @@ class MainWindow(QMainWindow):
                         panels.append((os.path.splitext(os.path.basename(path))[0],
                                        *self.datasets_for(path, subjects, t_range)))
                     except AssertionError:
-                        pass  # the selection leaves nothing on this stimulus
-        else:  # time windows
+                        pass
+        else:
             for t0, t1 in items:
                 try:
                     panels.append((f"{t0:.1f}–{t1:.1f} s", *self.datasets_for(self.current_path, subjects, (t0, t1))))
@@ -1340,7 +1273,6 @@ class MainWindow(QMainWindow):
         paths = list(self.stim_dfs)
 
         def work(progress):
-            # worker thread: numeric caches only, no Qt, no matplotlib figures
             if shared_scale:
                 progress(0, 0, "shared colour scale over all stimuli")
                 vmax = 0.
@@ -1368,7 +1300,7 @@ class MainWindow(QMainWindow):
                      'Scanpath Comparison': "Comparing scanpaths pairwise ...",
                      'Fixation Heatmap': "Rendering fixation heatmap ..."}.get(view_name, f"Rendering {view_name.lower()} ...")
         if prepare is None and not shared_scale:
-            done(True)  # nothing slow to do: draw right away
+            done(True)
             return
         if self.jobs.synchronous:
             self.show_busy(busy_text)
@@ -1438,7 +1370,6 @@ class MainWindow(QMainWindow):
             self.similarity_confirmed.add(key)
         return True
 
-    # Back-compatible names used by tests / notebooks
     def run_fixation_heatmap(self):
         self.run_view("Fixation Heatmap")
 
@@ -1472,7 +1403,6 @@ class MainWindow(QMainWindow):
     def run_statistics(self):
         self.run_view("Statistics")
 
-    # ---------- compare mode ----------
 
     def choose_compare(self):
         if self.dataset_fix is None:
@@ -1490,7 +1420,7 @@ class MainWindow(QMainWindow):
         self.update_compare_indicator()
         view = self.VIEWS[self.left_toolbar.currentRow()]
         if view not in COMPARABLE_VIEWS:
-            self.left_toolbar.setCurrentRow(0)  # jump to the heatmap, the most common comparison
+            self.left_toolbar.setCurrentRow(0)
         else:
             self.schedule_current_view(delay=30)
 
@@ -1511,10 +1441,8 @@ class MainWindow(QMainWindow):
                 'time': f"{len(items)} time windows"}[kind]
         self.status_compare.setText(f"◫ Comparing {what} (Analysis > Stop Comparing)")
 
-    # ---------- batch export ----------
 
     def batch_export(self):
-        # The current view with the current parameters and filter, once per stimulus, into a folder
         if self.dataset_fix is None:
             return
         view_name = self.VIEWS[self.left_toolbar.currentRow()]
@@ -1565,7 +1493,7 @@ class MainWindow(QMainWindow):
                     out = os.path.join(folder, f"{stim_name}_{view_slug}.csv")
                     table.to_csv(out, index=False)
                     written.append(out)
-            except Exception as e:  # noqa: BLE001  (one stimulus failing must not stop the others)
+            except Exception as e:  # noqa: BLE001
                 skipped.append(f"{stim_name}: {e}")
         progress.setValue(len(paths))
         self.save_dir = folder
@@ -1575,7 +1503,6 @@ class MainWindow(QMainWindow):
             text += "\n\nSkipped:\n" + "\n".join(f"  · {s}" for s in skipped[:8])
         QMessageBox.information(self, "Export Finished", text)
 
-    # ---------- AOIs (drawing on the canvas, list management, JSON) ----------
 
     def connect_drawing(self, ax, mode):
         canvas = self.painter.canvas
@@ -1658,7 +1585,7 @@ class MainWindow(QMainWindow):
         d['artists'] = []
         self.painter.canvas.draw_idle()
         if abs(x1 - x0) < 5 or abs(y1 - y0) < 5:
-            return  # a click, not a rectangle
+            return
         width, height = self.dataset_fix.width, self.dataset_fix.height
         x0, x1 = np.clip([x0, x1], 0, width)
         y0, y1 = np.clip([y0, y1], 0, height)
@@ -1705,7 +1632,6 @@ class MainWindow(QMainWindow):
         return name
 
     def set_aois_of(self, path, aois):
-        # Replace the AOI set of a stimulus in place (the dict is shared by every dataset object of that stimulus)
         target = self.aois.setdefault(path, {})
         target.clear()
         target.update(aois)
@@ -1806,10 +1732,8 @@ class MainWindow(QMainWindow):
         self.aoi_toolbar.set_aois(self.aois[self.current_path].keys())
         self.schedule_render(self.run_aoi, delay=30)
 
-    # ---------- groups ----------
 
     def grouping_for(self, subjects):
-        # The stored grouping restricted to the participants present in the current dataset
         if not self.grouping:
             return None
         present = set(subjects)
@@ -1846,8 +1770,6 @@ class MainWindow(QMainWindow):
         if not self.dataset_sac:
             return
         base_fix, base_sac = self.base_cache[self.current_path]
-        # For the prefill shortcut, use the imported table (it keeps the user's extra columns, e.g. a
-        # condition/group column): the auto-derived dataset only has synthetic columns.
         if len(base_fix.df.columns) >= len(base_sac.df.columns):
             df, subj_index = base_fix.df, base_fix.subj_index
         else:
@@ -1857,7 +1779,6 @@ class MainWindow(QMainWindow):
             self.set_grouping(dialog.get_grouping() or None)
             self.log.log('groups_assigned', grouping=self.grouping)
 
-    # ---------- export ----------
 
     def save_image(self):
         fig = self.painter.current_fig
@@ -1907,7 +1828,6 @@ def main():
     if '--selftest' in sys.argv:
         return selftest()
     app = QApplication(sys.argv)
-    # numbers in tables with a decimal point, matching the CSV exports and the Python side, whatever the OS locale
     QLocale.setDefault(QLocale(QLocale.English, QLocale.UnitedStates))
     app.setApplicationName("creapy.io")
     app.setOrganizationName("CReA")
@@ -1917,8 +1837,6 @@ def main():
 
 
 def selftest():
-    # `creapy-io --selftest`: open the example dataset offscreen and render every view once. Used to check a
-    # packaged build (PyInstaller .app / .exe) on a machine without a developer: prints OK or the failure.
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     app = QApplication(sys.argv)
     app.setApplicationName("creapy.io")
@@ -1934,7 +1852,7 @@ def selftest():
             window.left_toolbar.setCurrentRow(i)
             window.view_runs[i]()
             print(f"  {name:20s} {time.time() - t0:5.2f} s")
-    except Exception as e:  # noqa: BLE001  (the self-test reports anything)
+    except Exception as e:  # noqa: BLE001
         failures.append(f"{type(e).__name__}: {e}")
     if failures:
         print("SELFTEST FAILED:\n  " + "\n  ".join(failures))

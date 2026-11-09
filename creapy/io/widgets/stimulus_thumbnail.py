@@ -1,5 +1,3 @@
-# stimulus_thumbnail.py
-
 import os
 
 from PySide6.QtCore import Qt, Signal
@@ -8,14 +6,13 @@ from PySide6.QtGui import QPixmap, QMouseEvent, QFontMetrics
 
 
 class StimulusThumbnail(QWidget):
-    clicked = Signal(str)  # emits path or id
+    clicked = Signal(str)
 
     def __init__(self, path_to_stim, name=None, thumb_size=120, parent=None):
         super().__init__(parent)
 
         self.path_to_stim = path_to_stim
         self.name = name or os.path.splitext(os.path.basename(str(path_to_stim)))[0]
-        # Plain QWidget subclasses ignore stylesheet backgrounds/borders without this
         self.setAttribute(Qt.WA_StyledBackground, True)
 
         layout = QVBoxLayout(self)
@@ -25,9 +22,6 @@ class StimulusThumbnail(QWidget):
         self.img_label = QLabel()
         self.img_label.setAlignment(Qt.AlignCenter)
 
-        # The image itself arrives later via set_image (the strip decodes
-        # thumbnails in background threads); until then the tile is an empty
-        # square, which also keeps all tiles uniformly sized
         self.img_label.setFixedSize(thumb_size, thumb_size)
 
         max_label_width = max(thumb_size, 80)

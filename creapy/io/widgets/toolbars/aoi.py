@@ -6,10 +6,6 @@ import creapy.io.glossary as glossary
 
 
 class AOIToolbar(QWidget):
-    """
-    Areas of Interest: draw rectangles or polygons on the stimulus, manage the list, read the metrics table.
-    Drawing happens on the canvas (the main window wires the mouse events); this panel holds mode + list + display.
-    """
     AVAILABLE_OPACITY = list(np.round(np.arange(0, 1.05, 0.05), 2))
     AVAILABLE_MODE = ["Draw rectangle", "Draw polygon", "View only"]
     AVAILABLE_DISPLAY = ["Image with AOIs", "Metrics table", "Scarf plot", "Transition matrix", "First-fixation order"]
@@ -37,7 +33,7 @@ class AOIToolbar(QWidget):
         top_layout.addWidget(self.mode_selector)
 
         self.hint = utils.add_hint(top_layout, "Click the corners on the image; double-click (or right-click) to "
-                                               "close the shape. Esc cancels.")  # the longest of the three texts
+                                               "close the shape. Esc cancels.")
         self.mode_selector.currentIndexChanged.connect(self.update_hint)
         self.update_hint()
 

@@ -7,30 +7,24 @@ from matplotlib.colors import Normalize
 from PySide6.QtGui import QPainterPath, QFontMetrics
 
 class OrientationSelector(QWidget):
-    valueChanged = Signal(int)   # emits angle in degrees [0..180]
+    valueChanged = Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
-        self._value = 90  # start at middle
+        self._value = 90
         self._hover = False
         self._pressed = False
 
-        # match your QSlider handle colors
         self._color_base = QColor("#007aff")
         self._color_hover = QColor("#005bb5")
         self._color_pressed = QColor("#004080")
 
-        # optional cyclic colormap (matplotlib ScalarMappable)
         self._scalar_mappable = None
 
         self.setMinimumSize(120, 70)
         self.setMouseTracking(True)
 
     def setCyclicColormap(self, cyclic_cmap):
-        """
-        cyclic_cmap: a matplotlib colormap, e.g. the result of __make_cyclic_colormap().
-        Pass None to disable the colored dial.
-        """
         if cyclic_cmap is None:
             self._scalar_mappable = None
         else:
@@ -41,15 +35,9 @@ class OrientationSelector(QWidget):
         self.update()
 
     def _paint_colored_dial(self, painter: QPainter, center: QPointF, radius: float):
-        """
-        Fill the semicircle with colors from the cyclic colormap.
-        Color at angle ~self._value is 'warmest', opposite (~self._value+90) is 'coolest',
-        using the same mapping: (angle - ooi + 90) % 180.
-        """
         if self._scalar_mappable is None:
             return
 
-        # bounding rect for the full circle
         rect = QRectF(
             center.x() - radius,
             center.y() - radius,
@@ -57,7 +45,7 @@ class OrientationSelector(QWidget):
             2 * radius,
         )
 
-        steps = 30  # 1° per wedge; increase for smoother, decrease for speed
+        steps = 30
 
         painter.save()
         painter.setPen(Qt.NoPen)
@@ -68,15 +56,12 @@ class OrientationSelector(QWidget):
             end_deg = start_deg + step_deg
             mid_deg = (start_deg + end_deg) * 0.5
 
-            # This is exactly np.mod(_angles - ooi + 90, 180)
             mapped = (mid_deg - float(self._value) + 90.0) % 180.0
 
-            # map to RGBA from matplotlib
             r, g, b, a = self._scalar_mappable.to_rgba(mapped)
             color = QColor.fromRgbF(r, g, b, a)
 
             painter.setBrush(QBrush(color))
-            # QPainter angles are in 1/16 degrees, 0° at 3 o'clock, CCW positive
             painter.drawPie(
                 rect,
                 int(start_deg * 16),
@@ -100,10 +85,8 @@ class OrientationSelector(QWidget):
         self.valueChanged.emit(self._value)
         self.update()
 
-    # --- helpers ------------------------------------------------------
 
     def _geometry(self):
-        """Return (center QPointF, radius) of the semicircle."""
         w, h = self.width(), self.height()
         margin = 8
         center = QPointF(w / 2.0, h - margin)
@@ -124,7 +107,6 @@ class OrientationSelector(QWidget):
         dy = pos.y() - hc.y()
         return dx * dx + dy * dy <= tol * tol
 
-    # --- painting -----------------------------------------------------
 
     def paintEvent(self, event):
         center, radius = self._geometry()
@@ -133,11 +115,9 @@ class OrientationSelector(QWidget):
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
 
-        # 1) optional colored fill under the arc
         if self._scalar_mappable is not None:
             self._paint_colored_dial(painter, center, radius)
         else:
-            # 2) arc (0..180 degrees along the top)
             rect = (
                 center.x() - radius,
                 center.y() - radius,
@@ -157,15 +137,12 @@ class OrientationSelector(QWidget):
                 180 * 16,
             )
 
-        # 3) handle position
         handle_center = self._handle_center()
 
-        # line from center to handle
         pen_line = QPen(QColor("#ffffff"), 2)
         painter.setPen(pen_line)
         painter.drawLine(center, handle_center)
 
-        # 4) handle circle with hover/pressed color
         if self._pressed:
             color = self._color_pressed
         elif self._hover:
@@ -184,32 +161,27 @@ class OrientationSelector(QWidget):
         text_width = metrics.horizontalAdvance(text)
         text_height = metrics.height()
 
-        # baseline position for bottom-centered text
         x = (w - text_width) / 2.0
         y = h - metrics.descent()
 
         path = QPainterPath()
         path.addText(x, y, font, text)
 
-        # outline
         painter.setPen(QPen(Qt.black, 5))
         painter.setBrush(Qt.NoBrush)
         painter.drawPath(path)
 
-        # fill
         painter.setPen(Qt.NoPen)
         painter.setBrush(QColor("#ffffff"))
         painter.drawPath(path)
 
-    # --- mouse interaction --------------------------------------------
 
     def _update_from_pos(self, pos):
         center, _ = self._geometry()
         dx = pos.x() - center.x()
         dy = pos.y() - center.y()
 
-        # angle from positive X axis, going CCW, top half only
-        angle = math.degrees(math.atan2(-dy, dx))  # -dy because y axis is down
+        angle = math.degrees(math.atan2(-dy, dx))
         angle = max(0.0, min(180.0, angle))
         self.setValue(int(round(angle)))
 
@@ -232,7 +204,6 @@ class OrientationSelector(QWidget):
             self.update()
             event.accept()
         else:
-            # pure hover
             hovered = self._is_on_handle(pos)
             if hovered != self._hover:
                 self._hover = hovered
@@ -242,7 +213,6 @@ class OrientationSelector(QWidget):
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.LeftButton:
             self._pressed = False
-            # keep hover state depending on pointer position
             self._hover = self._is_on_handle(event.position())
             self.update()
             event.accept()

@@ -5,17 +5,11 @@ import traceback
 from datetime import datetime
 from PySide6.QtCore import QSettings, QStandardPaths
 
-# Opt-in session log for usability evaluations: one JSON line per event, on the user's own machine,
-# never sent anywhere. Parameter VALUES are logged with every render (not just "slider moved"), because the
-# forking-paths analysis needs to know which configurations a user visited before settling on one.
-
 
 class SessionLog:
-
     def __init__(self):
         self.settings = QSettings("CReA", "creapy.io")
         self.enabled = self.settings.value("logging/enabled", False, type=bool)
-        # independent of the QApplication name, so the GUI, tests and notebooks share one folder
         self.folder = os.path.join(QStandardPaths.writableLocation(QStandardPaths.GenericDataLocation),
                                    "creapy.io", "logs")
         self.path = None
@@ -66,7 +60,6 @@ class SessionLog:
 
 
 def _jsonable(value):
-    # numpy scalars, tuples of colors etc. -> plain JSON types; anything else -> str
     try:
         json.dumps(value)
         return value

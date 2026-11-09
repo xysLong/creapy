@@ -6,11 +6,7 @@ from creapy.misc.utils import natural_sorted
 
 
 def coefficient_k(fix_dur, next_sac_amp, subj):
-    """
-    Ambient–focal coefficient K (Krejtz et al. 2016): per fixation, z(duration) - z(amplitude of the following
-    saccade), both standardized over all fixations of the stimulus; K > 0 = focal (long fixations, short
-    saccades), K < 0 = ambient. Returns the per-fixation K and the per-participant mean.
-    """
+    """Ambient-focal coefficient K (Krejtz et al. 2016) per fixation."""
     fix_dur = np.asarray(fix_dur, dtype=float)
     next_sac_amp = np.asarray(next_sac_amp, dtype=float)
     subj = np.asarray(subj)
@@ -24,10 +20,7 @@ def coefficient_k(fix_dur, next_sac_amp, subj):
 
 
 def next_saccade_amplitude(dataset_fix):
-    """
-    Amplitude in image pixels of the saccade that follows each fixation, i.e. the distance to the next fixation of
-    the same participant (and trial), aligned with dataset_fix.df; NaN for the last fixation of each viewing.
-    """
+    """Amplitude in image pixels of the saccade that follows each fixation."""
     keys = [dataset_fix.subj_index_col] + ([dataset_fix.trial_col] if dataset_fix.trial_col else [])
     grouped = dataset_fix.df.groupby(keys, sort=False)
     next_x = grouped[dataset_fix.mapping['fix_x_col']].shift(-1)
@@ -42,26 +35,18 @@ def fixation_k(dataset_fix):
 
 
 def participant_table(dataset_fix, dataset_sac=None):
-    """
-    One row per participant with the fixation descriptives (n_fixations, mean/median duration, spread ...), the
-    saccade descriptives when dataset_sac is given (n_saccades, mean amplitude, scanpath length ...) and
-    coefficient_K. The table behind the GUI's Statistics view; durations in dataset_fix.dur_unit, distances in px.
-    """
+    """One row per participant with the fixation descriptives (n_fixations, mean/median duration, spread ...)."""
     df_stats = dataset_fix.participant_stats()
     if dataset_sac is not None:
         df_sac = dataset_sac.participant_stats()
         df_stats = df_stats.merge(df_sac, on='participant', how='left')
-    # K from the fixation table itself: the saccade following fixation i goes to fixation i + 1
     _, k_subj = coefficient_k(dataset_fix.fix_dur, next_saccade_amplitude(dataset_fix), dataset_fix.subj_index)
     df_stats['coefficient_K'] = df_stats['participant'].astype(object).map(k_subj)
     return df_stats
 
 
 def group_comparison(df_stats, grouping, columns=None):
-    """
-    Group means per measure plus a two-sample test (Welch t for two groups, one-way ANOVA for more) and a
-    Mann–Whitney U for two groups. grouping: participant -> group name. Participants without a group are left out.
-    """
+    """Group means per measure plus a two-sample test (Welch t, Mann-Whitney or ANOVA)."""
     df_ = df_stats.copy()
     df_['group'] = df_['participant'].astype(object).map(grouping)
     df_ = df_[df_['group'].notna()]
@@ -95,12 +80,7 @@ def group_comparison(df_stats, grouping, columns=None):
 
 def show_group_boxplot(df_values, measure, grouping=None, ax=None, group_col='group', jitter=0.12, seed=0,
                        box_color='#c7d3e6', median_color='#1f5fbf', point_color='#333333'):
-    """
-    Boxplot of one measure by group with every participant as a jittered point: the group boxplot of the GUI's
-    Statistics and Recurrence views. df_values has one row per participant (participant_table, participant_rqa,
-    aoi_metrics ...) and either a `group_col` or a `grouping` (participant -> group) that adds one. Participants
-    without a group are left out. Returns the group names in plotting order.
-    """
+    """Boxplot of one measure by group with every participant as a jittered point."""
     df_ = df_values.copy()
     if grouping is not None:
         df_[group_col] = df_['participant'].astype(object).map(grouping)

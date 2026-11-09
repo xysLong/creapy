@@ -4,10 +4,8 @@ import creapy.io.glossary as glossary
 
 
 class RecurrenceToolbar(QWidget):
-    # Recurrence quantification analysis (Anderson et al. 2013): recurrence plot of one participant, the RQA table
-    # of all participants, boxplot of one measure by group
     AVAILABLE_DISPLAY = ["Recurrence plot (one participant)", "RQA table", "Boxplot by group"]
-    AVAILABLE_RADIUS = [0.02, 0.03, 0.05, 0.08, 0.12]  # share of the image diagonal (Anderson: 64 px of 1024 ≈ 5 %)
+    AVAILABLE_RADIUS = [0.02, 0.03, 0.05, 0.08, 0.12]
     AVAILABLE_MIN_LINE = [2, 3, 4, 5]
     AVAILABLE_MEASURE = ["recurrence", "determinism", "laminarity", "corm"]
 

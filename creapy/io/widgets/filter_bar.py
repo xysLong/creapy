@@ -6,14 +6,10 @@ from creapy.misc.utils import natural_sorted
 
 ALL_TEXT = "All participants"
 GROUP_PREFIX = "Group: "
-STEP_S = 0.5  # time-window slider resolution in seconds
+STEP_S = 0.5
 
 
 class FilterBar(QFrame):
-    """
-    One row above the canvas: which participants and which part of the viewing time feed every view.
-    Emits filter_changed(): the main window reads participants() / t_range() and rebuilds the datasets.
-    """
     filter_changed = Signal()
 
     def __init__(self, parent=None):
@@ -62,12 +58,10 @@ class FilterBar(QFrame):
         layout.addWidget(self.reset_btn)
         layout.addStretch()
 
-        # start with the full window selected, whatever the first stimulus's viewing time turns out to be
         self.to_slider.setRange(0, 1)
         self.to_slider.setValue(1)
         self.set_time_max(30.)
 
-    # ---------- state in ----------
 
     def set_subjects(self, subjects, grouping=None):
         self._subjects = natural_sorted(subjects)
@@ -83,12 +77,11 @@ class FilterBar(QFrame):
         self.participant_selector.insertSeparator(self.participant_selector.count())
         for subj in self._subjects:
             self.participant_selector.addItem(str(subj), userData=('subject', subj))
-        idx = self.participant_selector.findText(current) if current else -1  # '' would match the separator
+        idx = self.participant_selector.findText(current) if current else -1
         self.participant_selector.setCurrentIndex(idx if idx >= 0 else 0)
         self.participant_selector.blockSignals(False)
 
     def set_time_max(self, t_max):
-        # Slider range follows the stimulus's viewing time; the current window is kept where possible
         self._t_max = max(float(t_max), STEP_S)
         n_steps = int(math.ceil(self._t_max / STEP_S))
         was_full = self.to_slider.value() >= self.to_slider.maximum()
@@ -103,10 +96,8 @@ class FilterBar(QFrame):
             slider.blockSignals(False)
         self._update_label()
 
-    # ---------- state out ----------
 
     def participants(self):
-        # None = everyone; else the list of selected participants
         data = self.participant_selector.currentData()
         if data is None:
             return None
@@ -119,7 +110,6 @@ class FilterBar(QFrame):
         return self.participant_selector.currentText()
 
     def t_range(self):
-        # None = the whole viewing; else (t0, t1) in seconds
         if self.from_slider.value() == 0 and self.to_slider.value() >= self.to_slider.maximum():
             return None
         return self.from_slider.value() * STEP_S, min(self.to_slider.value() * STEP_S, self._t_max)
@@ -131,7 +121,6 @@ class FilterBar(QFrame):
         p = self.participants()
         return (tuple(p) if p is not None else None, self.t_range())
 
-    # ---------- internals ----------
 
     def reset(self):
         self.participant_selector.blockSignals(True)
@@ -147,7 +136,6 @@ class FilterBar(QFrame):
         self.filter_changed.emit()
 
     def _on_slider(self, *_):
-        # keep from < to (at least one step apart)
         if self.from_slider.value() >= self.to_slider.value():
             if self.sender() is self.from_slider:
                 self.from_slider.blockSignals(True)

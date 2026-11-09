@@ -42,8 +42,8 @@ class SaccadeHeatmapToolbar(QWidget):
 
         line1 = QFrame(self)
         line1.setObjectName("sectionSeparator")
-        line1.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line1.setFixedHeight(1)  # 1px tall
+        line1.setFrameShape(QFrame.NoFrame)
+        line1.setFixedHeight(1)
 
         middle = QWidget(self)
         middle_layout = QVBoxLayout(middle)
@@ -52,17 +52,15 @@ class SaccadeHeatmapToolbar(QWidget):
 
         line2 = QFrame(self)
         line2.setObjectName("sectionSeparator")
-        line2.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line2.setFixedHeight(1)  # 1px tall
+        line2.setFrameShape(QFrame.NoFrame)
+        line2.setFixedHeight(1)
 
         bottom = QWidget(self)
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
-        # Stimulus Opacity
         self.stimulus_opacity_slider, self.stimulus_opacity_label, stimulus_title = utils.add_slider_row(
             top_layout,
             "Stimulus Opacity:",
@@ -73,15 +71,12 @@ class SaccadeHeatmapToolbar(QWidget):
         )
         stimulus_title.setProperty("boldTitle", True)
 
-        # Stimulus Black-White Checkbox
         self.grayscale_checkbox = QCheckBox('Grayscale')
         self.grayscale_checkbox.setChecked(True)
         self.grayscale_checkbox.stateChanged.connect(self.update_callback)
         top_layout.addWidget(self.grayscale_checkbox)
 
-        # -------------------------------------------------------------------------
 
-        # Heatmap OOI Dial
         ooi_title = QLabel("Orientation of Interest (OOI):")
         ooi_title.setProperty("boldTitle", True)
         middle_layout.addWidget(ooi_title)
@@ -91,9 +86,7 @@ class SaccadeHeatmapToolbar(QWidget):
         self.angle_dial.setCyclicColormap(make_cyclic_colormap('coolwarm'))
         middle_layout.addWidget(self.angle_dial)
 
-        # -------------------------------------------------------------------------
 
-        # Heatmap Opacity
         self.heatmap_opacity_slider, self.heatmap_opacity_label, heatmap_title = utils.add_slider_row(
             bottom_layout,
             "Heatmap Max. Opacity:",
@@ -104,7 +97,6 @@ class SaccadeHeatmapToolbar(QWidget):
         )
         heatmap_title.setProperty("boldTitle", True)
 
-        # Heatmap Colormap
         bottom_layout.addWidget(QLabel("Heatmap Colormap:"))
         self.color_selector = QComboBox()
         for cmap in self.AVAILABLE_HEATMAP_COLORMAP:
@@ -115,7 +107,6 @@ class SaccadeHeatmapToolbar(QWidget):
         self.color_selector.currentIndexChanged.connect(self.update_labels_and_run)
         bottom_layout.addWidget(self.color_selector)
 
-        # Heatmap Smoothing Bandwidth
         self.heatmap_sigma_slider, self.heatmap_sigma_label, _ = utils.add_slider_row(
             bottom_layout,
             "Smoothing Bandwidth:",
@@ -125,7 +116,6 @@ class SaccadeHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # Heatmap Quantile
         self.heatmap_quantile_slider, self.heatmap_quantile_label, _ = utils.add_slider_row(
             bottom_layout,
             "Quantile:",
@@ -135,7 +125,6 @@ class SaccadeHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # Heatmap Sensitivity
         self.heatmap_degree_slider, self.heatmap_degree_label, _ = utils.add_slider_row(
             bottom_layout,
             "Sensitivity:",
@@ -145,10 +134,8 @@ class SaccadeHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # -------------------------------------------------------------------------
 
-        # Buttons
-        self.save_btn = QPushButton("Save as Image")  # connect externally if needed
+        self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)
 
         outer.addWidget(top)

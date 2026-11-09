@@ -32,15 +32,14 @@ class TimeSeriesToolbar(QWidget):
 
         line1 = QFrame(self)
         line1.setObjectName("sectionSeparator")
-        line1.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line1.setFixedHeight(1)  # 1px tall
+        line1.setFrameShape(QFrame.NoFrame)
+        line1.setFixedHeight(1)
 
         bottom = QWidget(self)
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
         curve_title = QLabel("Temporal Profile:")
         curve_title.setProperty("boldTitle", True)
@@ -66,9 +65,7 @@ class TimeSeriesToolbar(QWidget):
         self.per_group_checkbox.stateChanged.connect(self.update_callback)
         top_layout.addWidget(self.per_group_checkbox)
 
-        # -------------------------------------------------------------------------
 
-        # Smoothing Bandwidth (in the time unit of the imported table)
         self.sigma_slider, self.sigma_label, sigma_title = utils.add_slider_row(
             bottom_layout,
             "Smoothing Bandwidth:",
@@ -79,7 +76,6 @@ class TimeSeriesToolbar(QWidget):
         )
         sigma_title.setProperty("boldTitle", True)
 
-        # Variability Band (fraction of the weighted std shown around the mean curve)
         self.band_slider, self.band_label, _ = utils.add_slider_row(
             bottom_layout,
             "Variability Band:",
@@ -89,10 +85,8 @@ class TimeSeriesToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # -------------------------------------------------------------------------
 
-        # Buttons
-        self.save_btn = QPushButton("Save as Image")  # connect externally if needed
+        self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)
 
         outer.addWidget(top)

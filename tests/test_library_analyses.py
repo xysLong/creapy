@@ -1,4 +1,3 @@
-"""0.3.0 library additions: shared colour scale, AOI sequences, generic pairwise results, Tobii extras."""
 import numpy as np
 import pandas as pd
 import pytest
@@ -39,7 +38,7 @@ def test_heatmap_shared_scale(fixation_table, fixation_mapping):
     assert vmax > 0
     sub = fix.subset(subjects=['vp1'])
     fig, ax = plt.subplots()
-    sub.make_heatmap(ax, bw_method=0.2, num_levels=8, vmax=vmax)  # saturates where denser than the whole group
+    sub.make_heatmap(ax, bw_method=0.2, num_levels=8, vmax=vmax)
     sub.make_heatmap(ax, bw_method=0.2, num_levels=8)
     plt.close(fig)
     assert (0.2, 8, vmax) in sub.cache_heatmap_contour and (0.2, 8, None) in sub.cache_heatmap_contour
@@ -54,12 +53,12 @@ def test_aoi_sequences_transitions_and_scarf(fixation_table, fixation_mapping):
     fix.set_top_down_aoi('right', AOI.rectangle('right', 200, 0, 400, 300).geom)
     df_seq = aoi_sequence(fix)
     assert len(df_seq) == len(fix.df) and set(df_seq['aoi']) <= {'left', 'right', 'outside'}
-    assert (df_seq['aoi'] != 'outside').all()  # the two AOIs cover the image
+    assert (df_seq['aoi'] != 'outside').all()
     df_runs = collapse_runs(df_seq)
     assert (df_runs['n_fixations'] >= 1).all() and df_runs['dwell'].sum() == pytest.approx(fix.fix_dur.sum())
     m = transition_matrix(fix, normalize='row')
     assert list(m.index) == ['left', 'right'] and np.allclose(m.sum(axis=1), 1.)
-    assert m.loc['left', 'left'] == 0  # visits collapse self-transitions
+    assert m.loc['left', 'left'] == 0
     counts = transition_matrix(fix, normalize=None, per_participant_weight=False)
     assert counts.to_numpy().sum() == len(df_runs) - df_runs.groupby(['participant', 'trial']).ngroups
     df_metrics = fix.aoi_metrics()
@@ -144,7 +143,7 @@ def test_data_export_distance_and_chunked(tmp_path):
     df, mapping = load_prolab_data_export(df_raw)
     assert mapping['pupil_col'] == 'pupil' and df['pupil'].eq(3.5).all()
     assert df['distance_mm'].round(1).eq(round(np.hypot(100, 2000), 1)).all()
-    df_chunked, mapping2 = load_prolab_data_export_chunked(path, chunksize=7)  # chunks split fixations on purpose
+    df_chunked, mapping2 = load_prolab_data_export_chunked(path, chunksize=7)
     assert len(df_chunked) == len(df)
     merged = df.merge(df_chunked, on=['participant', 'stimulus', 't'], suffixes=('', '_c'))
     assert len(merged) == len(df) and np.allclose(merged['x'], merged['x_c']) and np.allclose(merged['dur'], merged['dur_c'])

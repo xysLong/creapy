@@ -3,9 +3,6 @@ import os
 import creapy
 from creapy.aoi.aoi import AOI
 
-# A creapy project file (.creapy.json) remembers everything the user typed in by hand: where the table and the
-# images are, the column mapping, the groups, the areas of interest, the current view, so a session can be
-# resumed without redoing the import dialog. It holds no gaze data: the table is re-read from its original path.
 
 PROJECT_SUFFIX = ".creapy.json"
 PROJECT_VERSION = 1
@@ -25,8 +22,6 @@ def load_project(path):
 
 
 def aois_to_records(aois_by_path, sizes):
-    # {stimulus path: {name: AOI}} -> JSON-able list; sizes: path -> (width, height) of the image array the AOIs
-    # were drawn on, so a later session can warn when the image changed
     ls = []
     for path, aois in aois_by_path.items():
         if not aois:
@@ -44,7 +39,6 @@ def aois_from_records(records):
 
 
 def relocate(path, project_dir):
-    # Files referenced by a project may have moved with it: try the stored path, then the project folder
     if path and os.path.exists(path):
         return path
     if path:

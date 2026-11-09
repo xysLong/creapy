@@ -11,19 +11,13 @@ from creapy.similarity.heatmatch_result import HeatMatchSimilarityResult, HeatMa
 
 
 def report_progress(progress, done, total, text):
-    """Forward (done, total, text) to a progress callback; a callback that returns False asks for an abort, which is
-    raised as InterruptedError. Shared by the long loops below.
-    """
+    """Forward (done, total, text) to a progress callback; a callback that returns False asks for an abort."""
     if progress(done, total, text) is False:
         raise InterruptedError("Computation cancelled.")
 
 
 class SaccadeData(StimulusGaze):
-    """Saccades of all participants on one stimulus image, each a line from (x0, y0) to (x1, y1) in pixels of the image
-    array with y down (normalized_xy=True for Tobii's 0-1 positions). Column names come as parameters (sac_*_col,
-    subj_index_col, optional trial_col). angles_360 holds the direction of each saccade in degrees as seen on screen
-    (0 right, 90 up), angles_180 the orientation folded to [0, 180). Orientation fields and similarities are cached.
-    """
+    """Saccades of all participants on one stimulus image, each a line from (x0, y0) to (x1, y1)."""
 
     def __init__(self, df_stim, path_to_stim,
                  sac_x0_col, sac_y0_col, sac_x1_col, sac_y1_col, sac_t_col, sac_amp_col,
@@ -47,7 +41,6 @@ class SaccadeData(StimulusGaze):
                          sigma=sigma,
                          trial_col=trial_col,
                          img=img, scale=scale, time_unit=time_unit)
-        # bring the coordinates onto the (possibly downscaled) image array, as FixationData does
         if normalized_xy:
             for col, size in [(sac_x0_col, self.width), (sac_x1_col, self.width), (sac_y0_col, self.height), (sac_y1_col, self.height)]:
                 self.df[col] = self.df[col] * size
@@ -62,51 +55,42 @@ class SaccadeData(StimulusGaze):
         self.sac_y0 = self.df[sac_y0_col].astype(float)
         self.sac_x1 = self.df[sac_x1_col].astype(float)
         self.sac_y1 = self.df[sac_y1_col].astype(float)
-        # print(self.df[[sac_x0_col, sac_y0_col, sac_x1_col, sac_y1_col]].head(10).to_string())
         self.sac_lines = shapely.linestrings(np.dstack([
             [self.sac_x0, self.sac_y0],
             [self.sac_x1, self.sac_y1]
         ]).transpose(1, 2, 0))
-        # print(self.sac_lines)
 
         self.sac_amp = self.v
 
-        # For rose plots:
         self.angles_360 = SaccadeData.__compute_angles(self.sac_lines)
         self.angles_180 = np.mod(self.angles_360, 180)
 
-        # For heatmap generation
         self._onset = np.column_stack([np.asarray(self.sac_x0, dtype=float),
                                        np.asarray(self.sac_y0, dtype=float)])
         self._offset = np.column_stack([np.asarray(self.sac_x1, dtype=float),
                                         np.asarray(self.sac_y1, dtype=float)])
         self._points = np.column_stack([self.xi.ravel(), self.yi.ravel()])
-        self._field_cache: dict = {}  # sigma -> OrientationField
+        self._field_cache: dict = {}
 
-        self._heatmap_cache: dict = {}  # sigma -> Heatmap
+        self._heatmap_cache: dict = {}
 
-        self._subject_field_cache: dict = {}  # sigma -> {subj -> OrientationField}
+        self._subject_field_cache: dict = {}
 
-        self._similarity_cache: dict = {}  # (sigma, density_coherence_tradeoff) -> HeatMatchSimilarityResult
+        self._similarity_cache: dict = {}
 
-        self._profile_cache: dict = {}  # (window, step, sigma, tradeoff, min_saccades) -> HeatMatchSimilarityProfile
+        self._profile_cache: dict = {}
 
     def subset(self, subjects=None, t_range=None):
-        """A new SaccadeData with only the selected participants (iterable of ids) and/or time window t_range=(t0, t1)
-        in seconds. Orientation fields are recomputed lazily. Asserts that at least one saccade remains.
-        """
+        """A new SaccadeData with only the selected participants and/or time window."""
         mask = self.subset_rows(subjects=subjects, t_range=t_range)
         assert mask.any(), "The selection leaves no saccades."
         df_ = self.df[mask].copy()
-        df_[self.t_col] = self.t[mask].to_numpy()  # already in seconds, relative to the trial start
+        df_[self.t_col] = self.t[mask].to_numpy()
         return SaccadeData(df_, self.path_to_stim, img=self.img, scale=1., t_min=self.t_min, t_max=self.t_max,
-                           time_unit='s', **self.mapping)  # df_ already holds array pixels and seconds
+                           time_unit='s', **self.mapping)
 
     def participant_stats(self):
-        """One row per participant. Columns: participant, n_saccades, mean_saccade_amplitude and
-        median_saccade_amplitude (table unit, usually px or degrees), saccade_rate_per_s, horizontal_share (fraction of
-        saccades within 45 degrees of horizontal). Sorted in natural participant order.
-        """
+        """One row per participant."""
         ls = []
         for subj, df_subj in self.df.groupby(self.subj_index_col, sort=False):
             amp = self.sac_amp[df_subj.index]
@@ -122,10 +106,7 @@ class SaccadeData(StimulusGaze):
         return df_stats.sort_values('participant').reset_index(drop=True)
 
     def visualize_scanpaths(self, ax, color=(1, 1, 0), alpha=1., width=1, ooi=None, stimulus_alpha=1., grayscale=False):
-        """Draw every saccade as an arrow over the stimulus in ax (one quiver call). color is an RGB tuple, width scales
-        the arrow thickness. ooi, an orientation of interest in degrees (0 horizontal, 90 vertical), fades saccades of
-        other orientations: alpha is multiplied by a sigmoid of the angular similarity. Nothing is returned.
-        """
+        """Draw every saccade as an arrow over the stimulus in ax (one quiver call)."""
         self.plot_setup(ax, stimulus_alpha=stimulus_alpha, bw=grayscale)
 
         x0 = np.asarray(self.sac_x0)
@@ -133,7 +114,6 @@ class SaccadeData(StimulusGaze):
         y0 = np.asarray(self.sac_y0)
         y1 = np.asarray(self.sac_y1)
 
-        # Direction vectors for quiver
         u = x1 - x0
         v = y1 - y0
 
@@ -142,16 +122,12 @@ class SaccadeData(StimulusGaze):
             angular_similarity = 1 - (diff / 90.)
             alpha = self.__nonlinearity(angular_similarity) * alpha
 
-        # Use alpha from weights by making an RGBA array
-        # base color = yellow = (1, 1, 0), then add alpha from weights
         colors = np.ones((len(u), 4))
         colors[:, 0], colors[:, 1], colors[:, 2] = color
         colors[:, 3] = alpha
 
-        # Turn off autoscaling updates while adding lots of artists
         ax.autoscale(False)
 
-        # Single fast call to draw all arrows
         ax.quiver(
             x0.ravel(), y0.ravel(),
             u.ravel(), v.ravel(),
@@ -164,33 +140,21 @@ class SaccadeData(StimulusGaze):
             headwidth=1.2 * width,
             headlength=1.6 * width,
             headaxislength=1.4 * width,
-            minlength=0,  # don’t drop short arrows
+            minlength=0,
         )
 
-        # for i in np.random.choice(range(len(u)), 5):
-        #     ax.scatter(self.sac_x0[i], self.sac_y0[i], s=10, color='red')
-        #     ax.plot([self.sac_x0[i], self.sac_x1[i]], [self.sac_y0[i], self.sac_y1[i]], color='black')
-        #     ax.scatter(self.sac_x1[i], self.sac_y1[i], s=10, color='blue')
-        #     ax.text(self.sac_x1[i], self.sac_y1[i], self.angles_180[i])
 
     def make_heatmap(self, ax, alpha, sigma, cmap='coolwarm', ooi=90, quantile=0.8, degree=2,
                      stimulus_alpha=1, grayscale=False):
-        """HeatMatch orientation heatmap (Long et al. 2026) over the stimulus in ax. sigma is the kernel width in pixels
-        of the image array; ooi is the orientation painted warm, in degrees as seen on screen (90 = vertical), the cool
-        end of cmap goes to the perpendicular one; alpha is the base opacity, quantile and degree shape how quickly low
-        density fades out. Slow on big datasets; the field is cached per sigma (see prepare_heatmap).
-        """
+        """HeatMatch orientation heatmap (Long et al. 2026) over the stimulus in ax."""
         self.plot_setup(ax, stimulus_alpha=stimulus_alpha, bw=grayscale)
-        # ooi here is the visual (y-up) orientation to paint warm, like the GUI dial
-        # and visualize_scanpaths. heatmatch anchors its ooi at the cool end and
-        # measures angles in image (y-down) coordinates: (90 - ooi) converts both.
         self._get_heatmap(sigma).draw(ax, ooi=(90 - ooi) % 180, base_opacity=alpha,
                                        opacity_density_weight=0.8,
                                        cmap=cmap, degree=degree, quantile=quantile)
 
     def _get_heatmap(self, sigma):
         if sigma not in self._heatmap_cache:
-            self.get_circular_weighted_stats(sigma)  # populates _field_cache
+            self.get_circular_weighted_stats(sigma)
             self._heatmap_cache[sigma] = Heatmap(self._field_cache[sigma], self.width, self.height)
         return self._heatmap_cache[sigma]
 
@@ -203,11 +167,7 @@ class SaccadeData(StimulusGaze):
 
 
     def get_circular_weighted_stats(self, sigma):
-        """The orientation field behind the saccade heatmap, computed by heatmatch with kernel width sigma in pixels and
-        cached per sigma. Returns three flat arrays over the interpolation grid (reshape with self.xi.shape): mean
-        orientation in degrees [0, 180) in image (y-down) coordinates, 0 where nothing is in reach; coherence R in
-        [0, 1]; density rho (sums to 1).
-        """
+        """The orientation field behind the saccade heatmap, computed by heatmatch with kernel width sigma."""
         if sigma not in self._field_cache:
             self._field_cache[sigma] = make_orientation_field(
                 self._points, self._onset, self._offset,
@@ -221,25 +181,18 @@ class SaccadeData(StimulusGaze):
     def __compute_angles(sac_lines):
         coords = shapely.get_coordinates(sac_lines).reshape(-1, 2, 2)
 
-        # Compute delta x and y
         dx = coords[:, 1, 0] - coords[:, 0, 0]
         dy = coords[:, 1, 1] - coords[:, 0, 1]
 
-        # Compute angle in radians, convert to degrees
-        angles_rad = np.arctan2(-dy, dx) # flip y to get y-up angles
+        angles_rad = np.arctan2(-dy, dx)
         angles_deg = np.degrees(angles_rad)
 
-        # Normalize to [0, 360)
         angles_deg = np.mod(angles_deg, 360)
         return angles_deg
 
     def make_rose_plot(self, bins=36, title=None, ax=None, rays=True, num=False, hull=True, hull_args=None,
                        cmap='GnBu', center_symmetric=False, subjects=None):
-        """Rose diagram of saccade directions in `bins` bins over 360 degrees, every participant weighted equally, bar
-        height = share of saccades (sums to 1); rays, num and hull toggle bars, percent labels and outline. ax must be a
-        polar axes when given, otherwise a figure is made and shown. center_symmetric=True folds directions onto
-        orientations. Returns (xx, yy): bin centres in degrees (0 right, 90 up) and the share per bin.
-        """
+        """Rose diagram of saccade directions in `bins` bins over 360 degrees, every participant weighted equally."""
         cmap = plt.get_cmap(cmap)
         xx, yy = self.__circular_histogram(bins, center_symmetric=center_symmetric, subjects=subjects)
         x_angles_rad = np.radians(xx)
@@ -289,11 +242,7 @@ class SaccadeData(StimulusGaze):
         return xx, yy
 
     def compute_heatmatch_similarity(self, sigma=50, density_coherence_tradeoff=0.5, verbose=True, progress=None):
-        """Pairwise HeatMatch similarity (Long et al. 2026) between all participants, self-pairs included. sigma is the
-        kernel width in pixels, density_coherence_tradeoff in [0, 1] weights the directional score by density (1) or
-        coherence (0). Returns a HeatMatchSimilarityResult over s_loc/s_dir, cached per (sigma, tradeoff).
-        progress(done, total, text) is an optional callback; returning False aborts with InterruptedError (GUI cancel).
-        """
+        """Pairwise HeatMatch similarity (Long et al. 2026) between all participants, self-pairs included."""
         key = (sigma, density_coherence_tradeoff)
         if key not in self._similarity_cache:
             fields = self._get_subject_fields(sigma, verbose=verbose, progress=progress)
@@ -311,12 +260,7 @@ class SaccadeData(StimulusGaze):
     def compute_heatmatch_similarity_profile(self, window=None, step=None, sigma=50,
                                              density_coherence_tradeoff=0.5, min_saccades=3, verbose=True,
                                              progress=None):
-        """Sliding-window HeatMatch similarity: pairwise s_loc/s_dir per time window, i.e. viewer synchrony over time.
-        window and step in seconds (defaults: a third of the viewing time, half a window); participants with fewer than
-        min_saccades saccades in a window are left out of it. Returns a HeatMatchSimilarityProfile with columns
-        t_center, subject_a, subject_b, s_loc, s_dir, cached per parameter set; progress as in
-        compute_heatmatch_similarity.
-        """
+        """Sliding-window HeatMatch similarity: pairwise s_loc/s_dir per time window."""
         if window is None:
             window = (self.t_max - self.t_min) / 3
         if step is None:
@@ -363,11 +307,5 @@ class SaccadeData(StimulusGaze):
         return self._subject_field_cache[sigma]
 
     def prepare_heatmap(self, sigma):
-        """Compute the orientation field for `sigma` (pixels) into the cache without drawing, callable from a worker
-        thread; make_heatmap with the same sigma is then quick.
-        """
+        """Compute the orientation field for `sigma` (pixels) into the cache without drawing."""
         self._get_heatmap(sigma)
-
-    # Legacy grid-based saccade similarity (compute_grid_based_saccade_similarity,
-    # visualize_saccade_dominance_in_grid) retired 2026-09-04: superseded by
-    # compute_heatmatch_similarity above (HeatMatch is canonical for saccade similarity).

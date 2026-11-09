@@ -5,8 +5,6 @@ from PySide6.QtWidgets import QTableWidget, QTableWidgetItem, QWidget, QVBoxLayo
 
 
 class DataFrameView(QWidget):
-    """Read-only table of a DataFrame (the Statistics and AOI-metrics views), with a caption line above."""
-
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)

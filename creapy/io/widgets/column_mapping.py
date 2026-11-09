@@ -18,14 +18,11 @@ FORMAT_LABELS = {
 
 
 def find_column_mapping(columns, is_fixation):
-    # Kept for callers that only have the column names (the dev-mode shortcut, old notebooks)
     df = pd.DataFrame({col: pd.Series(dtype=float) for col in columns})
     return guess_mapping(df, FIXATION_FIELDS if is_fixation else SACCADE_FIELDS)
 
 
 class ColumnMappingDialog(QDialog):
-    """Tell creapy which column is which. Required fields must be set; optional ones may stay '(none)'."""
-
     def __init__(self, df, is_fixation=True, mapping=None, parent=None, detected=None):
         super().__init__(parent)
         self.setWindowTitle("Map Table Columns")
@@ -65,7 +62,6 @@ class ColumnMappingDialog(QDialog):
             self.combos[key] = combo
         body.addLayout(form, stretch=0)
 
-        # Preview of the first rows so the user can see what the columns hold
         self.preview = QTableWidget(min(8, len(df)), len(columns))
         self.preview.setHorizontalHeaderLabels(columns)
         self.preview.verticalHeader().setVisible(False)
@@ -101,7 +97,6 @@ class ColumnMappingDialog(QDialog):
         return mapping
 
     def highlight_preview(self, *_):
-        # Mapped columns get a tinted header so mistakes (two fields on one column) are visible at a glance
         mapped = {v for v in self.get_mapping().values() if v is not None}
         for col_idx in range(self.preview.columnCount()):
             item = self.preview.horizontalHeaderItem(col_idx)

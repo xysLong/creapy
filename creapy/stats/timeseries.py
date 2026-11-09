@@ -1,8 +1,3 @@
-"""
-A per-fixation value (fixation duration, saccade amplitude, coefficient K, pupil size, viewing distance) as a
-smoothed curve over viewing time, for all participants together or per group. This is what the GUI's Time Series
-view draws; here it is three plain functions on a FixationData / SaccadeData pair and a matplotlib axes.
-"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -10,7 +5,6 @@ from creapy.gaze.base import StimulusGaze
 from creapy.stats.descriptives import fixation_k
 from creapy.misc.utils import natural_sorted
 
-# measure key -> label as the GUI shows it (both spellings are accepted everywhere below)
 MEASURES = {
     'fixation_duration': "Fixation Duration",
     'saccade_amplitude': "Saccade Amplitude",
@@ -31,12 +25,7 @@ def measure_key(name):
 
 
 def value_series(fix, sac, measure):
-    """
-    The raw per-event values of one measure: returns (dataset, values, y label), where dataset is `fix` or `sac`
-    (saccade amplitude lives in the saccade table) and values is a float array aligned with dataset.df.
-    measure: 'fixation_duration', 'saccade_amplitude', 'coefficient_k', 'pupil' or 'viewing_distance'.
-    Raises ValueError when the table has no pupil column / no viewing distance (Tobii glasses Data exports only).
-    """
+    """The raw per-event values of one measure: returns (dataset, values, y label)."""
     key = measure_key(measure)
     if key == 'fixation_duration':
         return fix, fix.fix_dur.to_numpy(dtype=float), f"Fixation duration ({fix.dur_unit})"
@@ -60,11 +49,7 @@ def value_series(fix, sac, measure):
 
 
 def smoothed_curve(dataset, values, sigma, step=0.05, weights=None):
-    """
-    Gaussian-smoothed mean of `values` (aligned with dataset.df) over viewing time: returns (t, mean, std) on a
-    regular grid from the first to the last event, `step` and `sigma` (kernel width) in seconds. Every participant
-    counts equally: the default weights are 1 / number of events of the participant; NaN values are skipped.
-    """
+    """Gaussian-smoothed mean of `values` over viewing time: returns (t, mean, std) on a regular grid."""
     values = np.asarray(values, dtype=float)
     ok = np.isfinite(values)
     if weights is None:
@@ -77,11 +62,7 @@ def smoothed_curve(dataset, values, sigma, step=0.05, weights=None):
 
 
 def show_smoothed_curve(ax, dataset, values, sigma, n_std=0.05, color=None, label=None, step=0.05, t_valid=None):
-    """
-    Draw smoothed_curve(...) on ax: a solid line up to t_valid (default 5 s before the end, after which few
-    participants are still viewing and the mean gets unreliable), dashed after it, and a band of ± n_std standard
-    deviations when 0 < n_std <= 1. Returns (t, mean).
-    """
+    """Draw smoothed_curve(...) on ax, dashed after t_valid, with a band of n_std standard deviations."""
     t_new, m, s = smoothed_curve(dataset, values, sigma, step=step)
     if t_valid is None:
         t_valid = max(dataset.t_min, dataset.t_max - 5.)
@@ -93,11 +74,7 @@ def show_smoothed_curve(ax, dataset, values, sigma, n_std=0.05, color=None, labe
 
 
 def show_measure_curve(fix, sac, measure, sigma=2., n_std=0.05, ax=None, color=None, label=None, step=0.05):
-    """
-    One call for a whole Time Series curve: value_series + show_smoothed_curve with axis labels; with ax=None a
-    figure is created and shown. For coefficient K a dotted zero line separates focal (above) from ambient (below).
-    Returns (t, mean).
-    """
+    """One call for a whole Time Series curve: value_series + show_smoothed_curve with axis labels."""
     data, values, ylabel = value_series(fix, sac, measure)
     show = ax is None
     if ax is None:
@@ -114,11 +91,7 @@ def show_measure_curve(fix, sac, measure, sigma=2., n_std=0.05, ax=None, color=N
 
 
 def split_by_group(fix, sac, grouping):
-    """
-    [(group name, fix subset, sac subset)] for the participants of every group, groups in natural order.
-    grouping maps participant -> group name; participants without a group are left out, empty groups dropped;
-    sac may be None. Draw a curve per entry to compare groups on one axes.
-    """
+    """[(group name, fix subset, sac subset)] for the participants of every group, groups in natural order."""
     ls = []
     for name in natural_sorted(set(grouping.values())):
         subs = [s for s in fix.subjects if grouping.get(s) == name]

@@ -10,30 +10,22 @@ from creapy.misc.utils import natural_sorted, natural_key
 
 
 class PairwiseSimilarityResult:
-    """
-    Pairwise similarity scores between all subjects viewing one stimulus: any measure that yields one number
-    per subject pair (HeatMatch s_loc/s_dir, MultiMatch, ScanMatch, cross-recurrence ...). The matrix, group
-    boxplot, permutation test and viewer map work for every score column.
-    """
+    """Pairwise similarity scores between all subjects viewing one stimulus."""
 
     def __init__(self, df_sim, scores=None):
-        # One row per unordered subject pair, diagonal included: subject_a, subject_b, <score columns>
         assert list(df_sim)[:2] == ['subject_a', 'subject_b']
         self.scores = list(scores) if scores is not None else [c for c in df_sim.columns[2:]]
         assert self.scores and all(c in df_sim.columns for c in self.scores)
         self.df_sim = df_sim
         self.subjects = natural_sorted(set(df_sim['subject_a']) | set(df_sim['subject_b']))
-        self._permutation_cache = {}  # (which, grouping items, n_permutations, seed) -> result dict
+        self._permutation_cache = {}
 
     def default_score(self):
         """The score column used when `which` is not given (s_dir for HeatMatch, the first column otherwise)."""
         return self.scores[0]
 
     def matrix(self, which=None, grouping=None):
-        """
-        Symmetric participant x participant DataFrame of one score; with a grouping (participant -> group) the rows
-        and columns are ordered group by group, so same-group pairs form blocks along the diagonal.
-        """
+        """Symmetric participant x participant DataFrame of one score."""
         if which is None:
             which = self.default_score()
         assert which in self.scores, f"Unknown score {which}; available: {self.scores}"
@@ -53,10 +45,7 @@ class PairwiseSimilarityResult:
         return labels, groups
 
     def matshow(self, which=None, grouping=None, ax=None, cmap='viridis', group_color='black'):
-        """
-        The similarity matrix as an image with a colour bar; with a grouping, group blocks are framed and labelled.
-        Above 40 participants only every tenth name is written. Returns the matrix DataFrame.
-        """
+        """The similarity matrix as an image with a colour bar."""
         matrix = self.matrix(which=which, grouping=grouping)
         _, groups = self.__labels_and_groups(grouping)
         labels = matrix.index
@@ -71,7 +60,6 @@ class PairwiseSimilarityResult:
             ax.set_xticklabels(labels, rotation=90, fontsize=8 if n > 25 else None)
             ax.set_yticklabels(labels, fontsize=8 if n > 25 else None)
         else:
-            # with 100+ participants the names would overprint: label every tenth
             step = 10 if n <= 200 else 25
             ax.set_xticks(range(0, n, step))
             ax.set_yticks(range(0, n, step))
@@ -79,7 +67,6 @@ class PairwiseSimilarityResult:
             ax.set_yticklabels([labels[i] for i in range(0, n, step)], fontsize=7)
         ax.figure.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         if groups is not None:
-            # bracket geometry scales with the matrix size (the old fixed -2 offsets vanish at n = 157)
             d = max(2., 0.03 * n)
             w0 = -0.5
             for group_name, group in groups.items():
@@ -103,20 +90,15 @@ class PairwiseSimilarityResult:
         return matrix
 
     def show_boxplot(self, grouping, which=None, ax=None):
-        """
-        Boxplots of the pairwise scores within each group and between each pair of groups ('A/B'); grouping maps
-        participant -> group. The within-vs-between question is tested by permutation_test.
-        """
+        """Boxplots of the pairwise scores within each group and between each pair of groups ('A/B')."""
         which = which or self.default_score()
         matrix = self.matrix(which=which, grouping=grouping)
         _, groups = self.__labels_and_groups(grouping)
         data = []
         labels = []
-        # Within-group similarities
         for group_name, group in groups.items():
             data.append([matrix.loc[s1, s2] for s1, s2 in itertools.combinations(group, 2)])
             labels.append(group_name)
-        # Between-group similarities
         for (name_1, group_1), (name_2, group_2) in itertools.combinations(groups.items(), 2):
             data.append([matrix.loc[s1, s2] for s1, s2 in itertools.product(group_1, group_2)])
             labels.append(f"{name_1}/{name_2}")
@@ -130,21 +112,15 @@ class PairwiseSimilarityResult:
             plt.show()
 
     def permutation_test(self, grouping, which=None, n_permutations=10_000, seed=0, verbose=True):
-        """
-        One-sided permutation test: are participants more similar within their group than between groups?
-        Statistic = mean within-group score - mean between-group score, group labels shuffled under the null.
-        Returns a dict with which, within_mean, between_mean, observed, p_value, n_permutations (cached per call).
-        """
+        """One-sided permutation test: are participants more similar within their group than between groups?"""
         which = which or self.default_score()
-        # One-sided permutation test: are subjects more similar within their group than between groups?
-        # Statistic: mean(within-group sims) - mean(between-group sims); group labels shuffled under the null.
         key = (which, tuple(sorted(grouping.items())), n_permutations, seed)
         if key in self._permutation_cache:
             return self._permutation_cache[key]
         matrix = self.matrix(which=which, grouping=grouping)
         labels = np.array([grouping[subj] for subj in matrix.index])
         assert len(set(labels)) >= 2, "The permutation test needs at least two groups!"
-        iu, ju = np.triu_indices(len(labels), k=1)  # unordered pairs, self-similarities excluded
+        iu, ju = np.triu_indices(len(labels), k=1)
         sims = matrix.to_numpy()[iu, ju]
 
         def statistic(labels_):
@@ -168,11 +144,7 @@ class PairwiseSimilarityResult:
         return self._permutation_cache[key]
 
     def score_overview(self, grouping=None):
-        """
-        Mean score over all unordered participant pairs, one row per score column: columns 'measure', 'all pairs'
-        and, with a grouping (participant -> group) of two or more groups, 'within groups' and 'between groups'.
-        For MultiMatch this is the five-dimension summary of the GUI's Measure overview.
-        """
+        """Mean score over all unordered participant pairs, one row per score column."""
         iu, ju = np.triu_indices(len(self.subjects), k=1)
         ls = []
         for score in self.scores:
@@ -190,10 +162,7 @@ class PairwiseSimilarityResult:
         return pd.DataFrame.from_records(ls)
 
     def show_score_overview(self, grouping=None, ax=None, strip_prefix='mm_'):
-        """
-        Grouped bar chart of score_overview(): one group of bars per score (all pairs / within / between groups),
-        y from 0 to 1. strip_prefix is removed from the tick labels ('mm_vector' -> 'vector'). Returns the table.
-        """
+        """Grouped bar chart of score_overview(): one group of bars per score."""
         df_over = self.score_overview(grouping=grouping)
         cols = [c for c in df_over.columns if c != 'measure']
         show = ax is None
@@ -215,16 +184,9 @@ class PairwiseSimilarityResult:
         return df_over
 
     def show_multidimensional_scaling(self, grouping=None, which=None, ax=None):
-        """
-        Viewer map: each participant as a point in two dimensions (spectral embedding of the similarity matrix),
-        coloured by group when a grouping is given. Near points = similar viewing; the axes carry no unit.
-        """
+        """Viewer map: each participant as a point in two dimensions."""
         matrix = self.matrix(which=which, grouping=grouping)
         matrix = matrix.fillna(0.)
-        # SpectralEmbedding expects an affinity (= similarity) matrix, so the scores are passed directly
-        # TSNE(n_components=2, perplexity=5, init='random', metric='precomputed')
-        # MDS(n_components=2, metric=True, n_init=1, dissimilarity='precomputed')
-        # Isomap(metric='precomputed')
         model = manifold.SpectralEmbedding(affinity='precomputed')
         dim_reduced = model.fit_transform(matrix.to_numpy())
         show = ax is None
@@ -254,18 +216,12 @@ class HeatMatchSimilarityProfile:
     """Sliding-window HeatMatch similarity: pairwise scores per time window (viewer synchrony over time)."""
 
     def __init__(self, df_profile, window):
-        # One row per time window and unordered subject pair: t_center, subject_a, subject_b, s_loc, s_dir
         assert list(df_profile) == ['t_center', 'subject_a', 'subject_b', 's_loc', 's_dir']
         self.df_profile = df_profile
         self.window = window
 
     def curves(self, which='s_dir', grouping=None):
-        """
-        {label: DataFrame indexed by window centre (s) with columns mean, std}: one curve 'all pairs' without a
-        grouping, otherwise one per group (within) and one per group pair 'A/B' (between).
-        """
-        # {label: df with t_center index and mean/std columns}: 'all pairs' without grouping,
-        # else one curve per group (within) and per group pair (between), like show_boxplot
+        """{label: DataFrame indexed by window centre (s) with columns mean, std}."""
         assert which in ['s_loc', 's_dir']
         df_ = self.df_profile.copy()
         if grouping is None:
@@ -274,7 +230,7 @@ class HeatMatchSimilarityProfile:
             ls = []
             for a, b in zip(df_['subject_a'].map(grouping), df_['subject_b'].map(grouping)):
                 if pd.isna(a) or pd.isna(b):
-                    ls.append(None)  # subject not in the grouping -> pair excluded
+                    ls.append(None)
                 elif a == b:
                     ls.append(a)
                 else:
@@ -288,10 +244,7 @@ class HeatMatchSimilarityProfile:
         return curves
 
     def show_profile(self, which='s_dir', grouping=None, ax=None, n_std=0.05):
-        """
-        Similarity over viewing time: the curves of curves() with a band of ± n_std standard deviations.
-        Returns the curves dict.
-        """
+        """Similarity over viewing time: the curves of curves() with a band of ± n_std standard deviations."""
         curves = self.curves(which=which, grouping=grouping)
         show = ax is None
         if ax is None:

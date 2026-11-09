@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "creapy"
-version = "0.3.0"
+version = "0.1.0"
 description = "Eye-tracking visual analytics for art history and empirical aesthetics (CReA Lab, University of Vienna): library + creapy.io desktop app"
 readme = "README.md"
 license = "MIT"

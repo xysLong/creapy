@@ -1,10 +1,6 @@
 import numpy as np
 import pandas as pd
 
-# Fixation table <-> saccade table for ONE stimulus. The old loops over df.iloc[i] / iloc[i + 1] were O(n) Python
-# per row; groupby + shift does the same in a few vectorized calls (several hundred times faster on a
-# 20k-row report) and no longer asserts sorted input: rows are sorted by time within each viewing.
-
 
 def viewing_keys(column_mapping):
     """The columns that identify one continuous viewing: [subj_index_col], plus trial_col when the mapping has one."""
@@ -16,11 +12,7 @@ def viewing_keys(column_mapping):
 
 
 def fixations_to_saccades(df_fixation, column_mapping):
-    """Derive the saccades between consecutive fixations of ONE stimulus: each fixation becomes a saccade from its own
-    position to the next fixation of the same viewing (the last fixation makes none). Returns (df, mapping): df with
-    columns x0, y0, x1, y1, t (fixation onset + duration, i.e. saccade onset in the table's time unit), subj, trial
-    (only with a trial column), amp (straight-line distance in pixels); mapping has the sac_*_col names for SaccadeData.
-    """
+    """Derive the saccades between consecutive fixations of ONE stimulus."""
     stim_col = column_mapping.get('stim_col')
     subj_index_col = column_mapping['subj_index_col']
     fix_x_col = column_mapping['fix_x_col']
@@ -37,12 +29,11 @@ def fixations_to_saccades(df_fixation, column_mapping):
         'y0': df_[fix_y_col].to_numpy(dtype=float),
         'x1': grouped[fix_x_col].shift(-1).to_numpy(dtype=float),
         'y1': grouped[fix_y_col].shift(-1).to_numpy(dtype=float),
-        't': (df_[fix_t_col] + df_[fix_dur_col]).to_numpy(dtype=float),  # saccade onset = fixation offset
+        't': (df_[fix_t_col] + df_[fix_dur_col]).to_numpy(dtype=float),
         'subj': df_[subj_index_col].to_numpy(),
     })
     if len(keys) > 1:
         df['trial'] = df_[keys[1]].to_numpy()
-    # the last fixation of a viewing has no following saccade; fixations without coordinates make no saccade either
     df = df.dropna(subset=['x0', 'y0', 'x1', 'y1']).reset_index(drop=True)
     df['amp'] = np.sqrt((df.x1 - df.x0) ** 2 + (df.y1 - df.y0) ** 2)
     mapping = {'sac_x0_col': 'x0', 'sac_y0_col': 'y0',
@@ -54,11 +45,7 @@ def fixations_to_saccades(df_fixation, column_mapping):
 
 
 def saccades_to_fixations(df_saccade, column_mapping):
-    """Reconstruct the fixations between consecutive saccades of ONE stimulus: a fixation sits midway between a
-    saccade's end point and the next saccade's start, lasts from this saccade's onset to the next (dur) and is stamped
-    with this saccade's onset (t); the last saccade of a viewing yields none. Returns (df, mapping): df with columns
-    x, y, t, dur, subj, trial (only with a trial column); mapping has the fix_*_col names for FixationData.
-    """
+    """Reconstruct the fixations between consecutive saccades of ONE stimulus."""
     stim_col = column_mapping.get('stim_col')
     subj_index_col = column_mapping['subj_index_col']
     sac_x0_col = column_mapping['sac_x0_col']
@@ -74,11 +61,10 @@ def saccades_to_fixations(df_saccade, column_mapping):
     next_x0 = grouped[sac_x0_col].shift(-1).to_numpy(dtype=float)
     next_y0 = grouped[sac_y0_col].shift(-1).to_numpy(dtype=float)
     next_t = grouped[sac_t_col].shift(-1).to_numpy(dtype=float)
-    # The fixation between two saccades: midway between this saccade's end and the next one's start
     df = pd.DataFrame({
         'x': (df_[sac_x1_col].to_numpy(dtype=float) + next_x0) / 2,
         'y': (df_[sac_y1_col].to_numpy(dtype=float) + next_y0) / 2,
-        't': df_[sac_t_col].to_numpy(dtype=float),  # the saccade's own onset, as in the original implementation
+        't': df_[sac_t_col].to_numpy(dtype=float),
         'dur': next_t - df_[sac_t_col].to_numpy(dtype=float),
         'subj': df_[subj_index_col].to_numpy(),
     })

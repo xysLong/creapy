@@ -6,8 +6,6 @@ import creapy.io.glossary as glossary
 
 
 class FixationScanpathToolbar(QWidget):
-    # The textbook scanpath: circles sized by fixation duration, connected in order, numbered.
-    # Which participant(s) are drawn is decided by the filter bar above the canvas.
     AVAILABLE_OPACITY = list(np.round(np.arange(0, 1.05, 0.05), 2))
     AVAILABLE_COLOR = [(1, 1, 0)] + [c for cmap in ['Set3', 'Accent', 'Dark2'] for c in
                                      plt.get_cmap(cmap).colors]  # type: ignore
@@ -41,7 +39,6 @@ class FixationScanpathToolbar(QWidget):
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
         self.stimulus_opacity_slider, self.stimulus_opacity_label, stimulus_title = utils.add_slider_row(
             top_layout, "Stimulus Opacity:", 0, len(self.AVAILABLE_OPACITY) - 1,
@@ -53,7 +50,6 @@ class FixationScanpathToolbar(QWidget):
         self.grayscale_checkbox.stateChanged.connect(self.update_callback)
         top_layout.addWidget(self.grayscale_checkbox)
 
-        # -------------------------------------------------------------------------
 
         utils.add_hint(bottom_layout, "Pick a participant in the <i>Show</i> bar above the image to see one numbered "
                                       "scanpath; with several participants each gets a colour.")
@@ -85,7 +81,6 @@ class FixationScanpathToolbar(QWidget):
             bottom_layout, "Line Width:", 0, len(self.AVAILABLE_LINE_WIDTH) - 1,
             self.AVAILABLE_LINE_WIDTH.index(self.DEFAULT_LINE_WIDTH), self.update_labels_and_run)
 
-        # -------------------------------------------------------------------------
 
         self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)

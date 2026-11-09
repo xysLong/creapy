@@ -1,6 +1,3 @@
-"""
-The library promise (DHd 2026): everything the GUI shows is reachable as a plain, documented, Qt-free library call.
-"""
 import inspect
 import importlib
 import os
@@ -26,7 +23,7 @@ PUBLIC_MODULES = ['creapy', 'creapy.gaze.base', 'creapy.gaze.fixation', 'creapy.
 def example():
     path = example_dataset()
     df, mapping = creapy.load_fixations(path)
-    datasets = creapy.datasets_by_stimulus(df, mapping, stimulus_paths=os.path.dirname(path))  # folder search
+    datasets = creapy.datasets_by_stimulus(df, mapping, stimulus_paths=os.path.dirname(path))
     fix, sac = datasets['demo_picture_A.png']
     grouping = {s: ('expert' if s <= 'P06' else 'layperson') for s in fix.subjects}
     return fix, sac, grouping
@@ -55,7 +52,6 @@ def test_every_public_callable_has_a_docstring():
 
 
 def test_library_imports_without_qt(tmp_path):
-    # A library-only install (pip install creapy, no [gui]) must import and run the quickstart with PySide6 absent
     import subprocess
     code = """
 import sys
@@ -84,16 +80,15 @@ def test_time_series_functions(example):
         t, m, s = smoothed_curve(data, values, sigma=2.)
         assert len(t) == len(m) == len(s) and np.isfinite(m).sum() > 0
     with pytest.raises(ValueError):
-        value_series(fix, sac, 'viewing_distance')  # the synthetic data has none
+        value_series(fix, sac, 'viewing_distance')
     with pytest.raises(ValueError):
         value_series(fix, sac, 'nonsense')
     fig, ax = plt.subplots()
     for name, fix_g, sac_g in creapy.split_by_group(fix, sac, grouping):
         t, m = creapy.show_measure_curve(fix_g, sac_g, 'coefficient_k', sigma=2., ax=ax, label=name)
         assert fix_g.n_subjects() == 6
-    assert len(ax.get_lines()) >= 4  # solid + dashed per group (+ zero line)
+    assert len(ax.get_lines()) >= 4
     plt.close(fig)
-    # the per-fixation K of the library equals what participant_table aggregates
     k = creapy.fixation_k(fix)
     df_stats = creapy.participant_table(fix, sac)
     k_first = pd.Series(k).groupby(fix.subj_index.to_numpy()).mean()[df_stats['participant'].iloc[0]]
@@ -109,7 +104,7 @@ def test_group_boxplot_and_score_overview(example):
     assert [t.get_text() for t in ax.get_xticklabels()] == ['expert (n=6)', 'layperson (n=6)']
     plt.close(fig)
     with pytest.raises(AssertionError):
-        creapy.show_group_boxplot(df_stats, 'coefficient_K', ax=ax)  # no groups at all
+        creapy.show_group_boxplot(df_stats, 'coefficient_K', ax=ax)
     mm = fix.compute_scanpath_similarity('multimatch', verbose=False)
     df_over = mm.score_overview(grouping)
     assert list(df_over.columns) == ['measure', 'all pairs', 'within groups', 'between groups']
@@ -126,7 +121,6 @@ def test_reference_generator_runs(tmp_path):
     import runpy, os, shutil
     src = os.path.join(os.path.dirname(__file__), '..', 'docs', 'make_library_reference.py')
     assert os.path.exists(src)
-    # run it against a copy so the repo file is only rewritten on purpose
     shutil.copy(src, tmp_path / 'make_library_reference.py')
     runpy.run_path(str(tmp_path / 'make_library_reference.py'), run_name='__main__')
     text = (tmp_path / 'LIBRARY.md').read_text(encoding='utf-8')

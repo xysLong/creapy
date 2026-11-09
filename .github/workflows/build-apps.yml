@@ -1,5 +1,3 @@
-# Builds the double-click apps on every version tag (v0.2.1 ...) or by hand (Actions > Run workflow).
-# Artifacts: creapy.io-<version>-macOS.zip (Apple silicon), -macOS-intel.zip, -Windows.zip, attached to a release.
 name: Build desktop apps
 
 on:

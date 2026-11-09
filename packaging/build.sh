@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Build the macOS (or Linux) bundle and self-test it. Run from the repository root:  bash packaging/build.sh
 set -euo pipefail
 cd "$(dirname "$0")/.."
 VERSION=$(python -c "import creapy; print(creapy.__version__)")

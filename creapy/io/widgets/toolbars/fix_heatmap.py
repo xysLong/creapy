@@ -5,8 +5,6 @@ import creapy.io.widgets.utils as utils
 import creapy.io.glossary as glossary
 
 
-
-
 class FixationHeatmapToolbar(QWidget):
     AVAILABLE_OPACITY = list(np.arange(0, 1.05, 0.05))
     AVAILABLE_CONTOUR_BW_METHOD = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
@@ -38,8 +36,6 @@ class FixationHeatmapToolbar(QWidget):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        # Helper to add a "title + value label + slider" row.
-
 
         top = QWidget(self)
         top_layout = QVBoxLayout(top)
@@ -48,8 +44,8 @@ class FixationHeatmapToolbar(QWidget):
 
         line1 = QFrame(self)
         line1.setObjectName("sectionSeparator")
-        line1.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line1.setFixedHeight(1)  # 1px tall
+        line1.setFrameShape(QFrame.NoFrame)
+        line1.setFixedHeight(1)
 
         middle = QWidget(self)
         middle_layout = QVBoxLayout(middle)
@@ -58,17 +54,15 @@ class FixationHeatmapToolbar(QWidget):
 
         line2 = QFrame(self)
         line2.setObjectName("sectionSeparator")
-        line2.setFrameShape(QFrame.NoFrame)  # important: let QSS draw the line
-        line2.setFixedHeight(1)  # 1px tall
+        line2.setFrameShape(QFrame.NoFrame)
+        line2.setFixedHeight(1)
 
         bottom = QWidget(self)
         bottom_layout = QVBoxLayout(bottom)
         bottom_layout.setContentsMargins(12, 8, 12, 12)
         bottom_layout.setSpacing(8)
 
-        # -------------------------------------------------------------------------
 
-        # Stimulus Opacity
         self.stimulus_opacity_slider, self.stimulus_opacity_label, stimulus_title = utils.add_slider_row(
             top_layout,
             "Stimulus Opacity:",
@@ -79,15 +73,12 @@ class FixationHeatmapToolbar(QWidget):
         )
         stimulus_title.setProperty("boldTitle", True)
 
-        # Stimulus Black-White Checkbox
         self.grayscale_checkbox = QCheckBox('Grayscale')
         self.grayscale_checkbox.setChecked(True)
         self.grayscale_checkbox.stateChanged.connect(self.update_callback)
         top_layout.addWidget(self.grayscale_checkbox)
 
-        # -------------------------------------------------------------------------
 
-        # Contour Opacity
         self.contour_opacity_slider, self.contour_opacity_label, contour_title =  utils.add_slider_row(
             middle_layout,
             "Contour Opacity:",
@@ -98,7 +89,6 @@ class FixationHeatmapToolbar(QWidget):
         )
         contour_title.setProperty("boldTitle", True)
 
-        # Colormap selection
         middle_layout.addWidget(QLabel("Contour Colormap:"))
         self.color_selector = QComboBox()
         for cmap in self.AVAILABLE_CONTOUR_COLORMAP:
@@ -108,7 +98,6 @@ class FixationHeatmapToolbar(QWidget):
         self.color_selector.currentIndexChanged.connect(self.update_labels_and_run)
         middle_layout.addWidget(self.color_selector)
 
-        # Smoothing Bandwidth
         self.bw_method_slider, self.bw_method_label, _ =  utils.add_slider_row(
             middle_layout,
             "Smoothing Bandwidth:",
@@ -118,7 +107,6 @@ class FixationHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # Number of Levels
         self.num_levels_slider, self.num_levels_label, _ =  utils.add_slider_row(
             middle_layout,
             "Number of Levels:",
@@ -128,7 +116,6 @@ class FixationHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # Show from Level (index into levels; max will be updated dynamically)
         self.from_level_slider, self.from_level_label, _ =  utils.add_slider_row(
             middle_layout,
             "Show from Level:",
@@ -138,16 +125,12 @@ class FixationHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # Shared colour scale: off = every heatmap normalised to its own maximum (the classic rendering, and the
-        # study's default); on = one scale across stimuli, groups and time windows (densities above saturate)
         self.shared_scale_checkbox = QCheckBox('Same colour scale for all stimuli / selections')
         self.shared_scale_checkbox.setChecked(False)
         self.shared_scale_checkbox.stateChanged.connect(self.update_callback)
         middle_layout.addWidget(self.shared_scale_checkbox)
 
-        # -------------------------------------------------------------------------
 
-        # Scatter Opacity
         self.scatter_opacity_slider, self.scatter_opacity_label, scatter_title = utils.add_slider_row(
             bottom_layout,
             "Scatter Opacity:",
@@ -158,7 +141,6 @@ class FixationHeatmapToolbar(QWidget):
         )
         scatter_title.setProperty("boldTitle", True)
 
-        # Scatter Color
         bottom_layout.addWidget(QLabel("Scatter Color:"))
         self.scatter_color_selector = QComboBox()
         self._default_scatter_index = 0
@@ -171,7 +153,6 @@ class FixationHeatmapToolbar(QWidget):
         self.scatter_color_selector.currentIndexChanged.connect(self.update_labels_and_run)
         bottom_layout.addWidget(self.scatter_color_selector)
 
-        # Scatter Size
         self.scatter_size_slider, self.scatter_size_label, _ =  utils.add_slider_row(
             bottom_layout,
             "Scatter Size:",
@@ -181,10 +162,8 @@ class FixationHeatmapToolbar(QWidget):
             self.update_labels_and_run
         )
 
-        # -------------------------------------------------------------------------
 
-        # Buttons
-        self.save_btn = QPushButton("Save as Image")  # connect externally if needed
+        self.save_btn = QPushButton("Save as Image")
         bottom_layout.addWidget(self.save_btn)
 
         outer.addWidget(top)
@@ -194,7 +173,6 @@ class FixationHeatmapToolbar(QWidget):
         outer.addWidget(bottom)
         outer.addStretch()
 
-        # Initialize labels with current slider states
         self.update_labels_and_run(run=False)
         utils.apply_tooltips(self, dict(glossary.COMMON_TIPS, **glossary.TOOLTIPS['fix_heatmap']))
 
@@ -205,13 +183,11 @@ class FixationHeatmapToolbar(QWidget):
         bw_method = self.AVAILABLE_CONTOUR_BW_METHOD[self.bw_method_slider.value()]
         num_levels = list(self.AVAILABLE_CONTOUR_NUM_LEVELS)[self.num_levels_slider.value()]
 
-        # from_level is an index into the levels, clamped to [0, num_levels-1]
         from_level_index = min(self.from_level_slider.value(), num_levels - 1)
 
         cmap = self.color_selector.currentText()
         alpha = self.AVAILABLE_OPACITY[self.contour_opacity_slider.value()]
 
-        # RGB array for scatter color
         scatter_color = self.scatter_color_selector.currentData()
 
         scatter_size = self.AVAILABLE_SCATTER_SIZE[self.scatter_size_slider.value()]
@@ -232,12 +208,6 @@ class FixationHeatmapToolbar(QWidget):
         }
 
     def update_labels_and_run(self, *args, run=True):
-        """
-        Update labels from current widget state and optionally call the callback.
-
-        *args is there so this can be used directly as a Qt slot (it will
-        receive the slider value, which we just ignore here).
-        """
         params = self.get_params()
         self.stimulus_opacity_label.setText(f"{int(params['stimulus_alpha'] * 100)}%")
         self.bw_method_label.setText(f"{params['bw_method']}")
@@ -255,4 +225,3 @@ class FixationHeatmapToolbar(QWidget):
 
         if run:
             self.update_callback()
-

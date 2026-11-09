@@ -1,10 +1,3 @@
-"""
-A small SYNTHETIC example dataset so the GUI and the notebooks can be tried without any participant data:
-two generated pictures, twelve invented viewers in two groups ('expert' / 'layperson'), 30 s each.
-The gaze is simulated from a handful of attractors per picture: it shows what the views do, nothing about people.
-The files ship with the package; when they are missing they are generated into a per-user folder, never into
-the installed package.
-"""
 import os
 import numpy as np
 import pandas as pd
@@ -17,10 +10,7 @@ SHIPPED = ("demo_fixations.csv", "demo_picture_A.png", "demo_picture_B.png")
 
 
 def example_folder():
-    """
-    Folder holding the example files: the copy shipped with the package, or, when that copy is incomplete,
-    ~/.creapy/example, where they are generated. Nothing is written into the installed package.
-    """
+    """Folder holding the example files."""
     if all(os.path.exists(os.path.join(HERE, name)) for name in SHIPPED):
         return HERE
     folder = os.path.join(os.path.expanduser("~"), ".creapy", "example")
@@ -29,10 +19,7 @@ def example_folder():
 
 
 def example_dataset():
-    """
-    Path of the example fixation CSV (demo_fixations.csv); pictures and table are generated on first call.
-    """
-    # Returns the path of the fixation CSV, generating everything on first call
+    """Path of the example fixation CSV (demo_fixations.csv); pictures and table are generated on first call."""
     folder = example_folder()
     csv_path = os.path.join(folder, "demo_fixations.csv")
     if not os.path.exists(csv_path):
@@ -41,29 +28,21 @@ def example_dataset():
 
 
 def draw_picture_a(path):
-    """
-    Paint synthetic picture A (a figure left of centre, a small bright object top right, a horizon line) at
-    1600 x 1200 px and save it to `path`.
-    """
-    # "Composition A": a large figure left of centre, a small bright object top right, a horizon line
+    """Paint synthetic picture A."""
     img = Image.new('RGB', (WIDTH, HEIGHT), (214, 203, 182))
     d = ImageDraw.Draw(img)
     d.rectangle([0, 760, WIDTH, HEIGHT], fill=(96, 112, 84))
     d.rectangle([0, 0, WIDTH, 760], fill=(176, 196, 214))
-    d.ellipse([520, 260, 860, 700], fill=(150, 72, 60))          # body
-    d.ellipse([610, 140, 770, 300], fill=(222, 186, 150))        # head
-    d.ellipse([1180, 160, 1300, 280], fill=(250, 232, 120))      # small bright object
-    d.polygon([(1000, 760), (1250, 460), (1500, 760)], fill=(92, 84, 110))  # distant hill
-    d.rectangle([120, 820, 420, 1120], fill=(70, 60, 50))        # dark block bottom left
+    d.ellipse([520, 260, 860, 700], fill=(150, 72, 60))
+    d.ellipse([610, 140, 770, 300], fill=(222, 186, 150))
+    d.ellipse([1180, 160, 1300, 280], fill=(250, 232, 120))
+    d.polygon([(1000, 760), (1250, 460), (1500, 760)], fill=(92, 84, 110))
+    d.rectangle([120, 820, 420, 1120], fill=(70, 60, 50))
     img.save(path)
 
 
 def draw_picture_b(path):
-    """
-    Paint synthetic picture B (two figures facing each other, a diagonal, scattered detail) at 1600 x 1200 px
-    and save it to `path`.
-    """
-    # "Composition B": two figures facing each other, a diagonal, scattered detail
+    """Paint synthetic picture B."""
     img = Image.new('RGB', (WIDTH, HEIGHT), (58, 52, 60))
     d = ImageDraw.Draw(img)
     d.polygon([(0, HEIGHT), (WIDTH, 0), (WIDTH, 220), (0, HEIGHT - 220)], fill=(110, 96, 88))
@@ -80,12 +59,7 @@ def draw_picture_b(path):
 
 
 def simulate_viewer(rng, attractors, weights, n_fix, focal, t_total=30.):
-    """
-    Simulate one viewer on one picture: a list of dicts with t_start (ms), dur (ms), x, y (px) and pupil,
-    up to n_fix fixations or t_total seconds. `attractors` are (x, y, spread) tuples drawn with `weights`;
-    the first three fixations stay central; focal viewers fixate longer.
-    """
-    # Attractors: list of (x, y, spread). focal viewers stay longer and jump less; early viewing is central.
+    """Simulate one viewer on one picture: a list of dicts with t_start (ms), dur (ms), x, y (px) and pupil."""
     ls = []
     t = 0.05
     xy = np.array([WIDTH / 2, HEIGHT / 2], dtype=float)
@@ -99,7 +73,7 @@ def simulate_viewer(rng, attractors, weights, n_fix, focal, t_total=30.):
             target = np.array([ax, ay]) + rng.normal(0, spread, 2)
         xy = target if rng.random() > 0.3 else xy + rng.normal(0, 40, 2)
         xy = np.clip(xy, [10, 10], [WIDTH - 10, HEIGHT - 10])
-        dur = float(np.exp(rng.normal(np.log(260 if focal else 190), 0.35)))  # ms, lognormal
+        dur = float(np.exp(rng.normal(np.log(260 if focal else 190), 0.35)))
         dur = dur * (0.8 if k < 3 else 1.0)
         ls.append({'t_start': round(t * 1000, 1), 'dur': round(dur, 1), 'x': round(xy[0], 1), 'y': round(xy[1], 1),
                    'pupil': round(float(rng.normal(900 if focal else 850, 40)), 1)})
@@ -109,11 +83,7 @@ def simulate_viewer(rng, attractors, weights, n_fix, focal, t_total=30.):
 
 
 def make_example(folder):
-    """
-    Write the whole example into `folder`: demo_picture_A.png, demo_picture_B.png, demo_fixations.csv and a
-    README.md. Returns the fixation DataFrame with the columns participant, group, age, trial, image,
-    t_start (ms), dur (ms), x, y (px), pupil.
-    """
+    """Write the whole example (two pictures, fixation table, README) into `folder`."""
     img_a = os.path.join(folder, "demo_picture_A.png")
     img_b = os.path.join(folder, "demo_picture_B.png")
     draw_picture_a(img_a)
@@ -124,8 +94,6 @@ def make_example(folder):
         'demo_picture_B.png': [(390, 320, 55), (1210, 340, 55), (390, 550, 90), (1210, 570, 90), (800, 980, 130),
                                (800, 130, 50)],
     }
-    # experts: more weight on the compositional elements (figures' heads, the diagonal), fewer long fixations;
-    # laypersons: pulled towards the bright object / scattered detail
     weights = {
         ('demo_picture_A.png', 'expert'): [0.32, 0.25, 0.08, 0.15, 0.20],
         ('demo_picture_A.png', 'layperson'): [0.25, 0.20, 0.30, 0.10, 0.15],

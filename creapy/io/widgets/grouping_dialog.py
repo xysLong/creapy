@@ -26,8 +26,6 @@ class GroupingDialog(QDialog):
         info.setWordWrap(True)
         layout.addWidget(info)
 
-        # Prefill shortcut: columns that are constant within each participant
-        # and split the participants into at least 2 (but not all-distinct) groups
         candidates = []
         for col in df.columns:
             per_subj_nunique = df.groupby(subj_index)[col].nunique(dropna=False)
@@ -74,7 +72,7 @@ class GroupingDialog(QDialog):
         col = self.prefill_selector.currentText()
         subj_to_value = self.df.groupby(self.subj_index)[col].first()
         for row, subj in enumerate(self.subjects):
-            value = subj_to_value.get(subj, "")  # participants absent from this stimulus keep an empty group
+            value = subj_to_value.get(subj, "")
             self.table.setItem(row, 1, QTableWidgetItem("" if pd.isna(value) else str(value)))
 
     def clear_all(self):
@@ -82,7 +80,6 @@ class GroupingDialog(QDialog):
             self.table.setItem(row, 1, QTableWidgetItem(""))
 
     def get_grouping(self):
-        # subj -> group name; blank rows are excluded
         grouping = {}
         for row, subj in enumerate(self.subjects):
             name = self.table.item(row, 1).text().strip()

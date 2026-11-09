@@ -1,5 +1,3 @@
-# stimulus_strip.py
-
 from PySide6.QtCore import Qt, Signal, QObject, QRunnable, QThreadPool
 from PySide6.QtGui import QImage, QImageReader
 from PySide6.QtWidgets import QScrollArea, QWidget, QHBoxLayout, QFrame
@@ -14,8 +12,6 @@ class ThumbnailLoaderSignals(QObject):
 
 
 class ThumbnailLoader(QRunnable):
-    # Decodes one stimulus image at thumbnail resolution in a worker thread, so
-    # a table with many large stimuli doesn't freeze the GUI at import.
     def __init__(self, path, size, signals):
         super().__init__()
         self.path = path
@@ -33,8 +29,6 @@ class ThumbnailLoader(QRunnable):
 
 
 class StimulusStrip(QScrollArea):
-    # Horizontal row of stimulus thumbnails above the canvas; clicking one
-    # switches the active stimulus.
     stimulus_selected = Signal(str)
 
     def __init__(self, paths, parent=None):
@@ -43,8 +37,6 @@ class StimulusStrip(QScrollArea):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarAsNeeded)
         self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.setFrameShape(QFrame.NoFrame)
-        # The scroll area's default viewport is white: paint the strip in the
-        # main window's dark background instead
         self.setStyleSheet("QScrollArea { background-color: #05060a; border: none; }"
                            "#StimulusStripContainer { background-color: #05060a; }")
 
@@ -67,9 +59,6 @@ class StimulusStrip(QScrollArea):
         self.setFixedHeight(container.sizeHint().height()
                             + self.horizontalScrollBar().sizeHint().height())
 
-        # Kick off the background thumbnail decoding. The signals object is
-        # kept alive by the loaders; a queued connection delivers each image on
-        # the GUI thread, and Qt drops deliveries if the strip is gone.
         self._loader_signals = ThumbnailLoaderSignals()
         self._loader_signals.loaded.connect(self._on_thumbnail_loaded)
         for path in paths:
@@ -80,7 +69,6 @@ class StimulusStrip(QScrollArea):
         self._thumbs[path].set_image(image)
 
     def mark(self, path):
-        # Update the highlight only (no signal): used to revert after a failed switch
         if self.current_path in self._thumbs:
             self._thumbs[self.current_path].set_selected(False)
         self.current_path = path

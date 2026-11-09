@@ -4,7 +4,6 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLabel, QComboB
 
 
 class StatisticsToolbar(QWidget):
-    # Tables + one boxplot: per-participant descriptives, group comparison, AOI metrics
     AVAILABLE_DISPLAY = ["Participants (table)", "Group comparison (table)", "AOI metrics (table)",
                          "Boxplot by group"]
 

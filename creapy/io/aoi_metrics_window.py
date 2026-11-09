@@ -15,12 +15,6 @@ from creapy.misc.utils import natural_sorted
 
 
 class AOIMetricsWindow(QDialog):
-    """
-    Tobii Pro Lab AOI-based metrics export as a table-only workspace: no positions, so nothing to draw on an
-    image, but the dwell/visit/fixation totals per AOI are what the museum papers report. Choose a metric, see the
-    mean per AOI (optionally split by Media / Condition / ...), read or export the summary and the raw rows.
-    """
-
     def __init__(self, df_aoi, info, source_name, parent=None, log=None):
         super().__init__(parent)
         self.setWindowTitle(f"AOI Metrics - {source_name}")

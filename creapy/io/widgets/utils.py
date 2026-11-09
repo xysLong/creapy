@@ -8,14 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# fixations_to_saccades / saccades_to_fixations moved to creapy.gaze.convert (vectorized, 2026-10-24)
-from creapy.gaze.convert import fixations_to_saccades, saccades_to_fixations  # noqa: F401  (kept for old imports)
+from creapy.gaze.convert import fixations_to_saccades, saccades_to_fixations  # noqa: F401
 
 
 def create_colormap_preview(color, cmap_name, width=30, height=30):
-    """
-    Create an icon preview either from a colormap or from a solid RGB color.
-    """
     if color is None:
         cmap = plt.get_cmap(cmap_name)
         gradient = np.linspace(0, 1, width).reshape(1, -1)
@@ -67,20 +63,16 @@ def add_slider_row(layout, title, minimum, maximum, value, callback):
     layout.addWidget(slider)
 
     value_label.setProperty("paramLabel", True)
-    slider.title_label = title_label  # so apply_tooltips can put the same text on the title
+    slider.title_label = title_label
 
     return slider, value_label, title_label
 
 def add_hint(layout, text, width=210):
-    # A wrapped explanatory label; the explicit minimum height works around Qt's wrong heightForWidth for
-    # word-wrapped labels inside fixed-width panels (the text used to be clipped).
-    text = re.sub(r'<(?=\s)', '&lt;', text)  # a bare "<" (as in "K < 0") would start an HTML tag and swallow the rest
+    text = re.sub(r'<(?=\s)', '&lt;', text)
     label = QLabel(text)
     label.setWordWrap(True)
     label.setProperty("sectionTitle", True)
     label.setTextFormat(Qt.RichText)
-    # heightForWidth is computed before the stylesheet's 11 px font is applied and comes out short, so the
-    # estimate below (about 34 characters per line in the 250 px panel) is the binding one; a little slack is fine
     plain = re.sub(r'<[^>]+>', '', text)
     lines = math.ceil(len(plain) / 34) + 1
     label.setMinimumHeight(max(label.heightForWidth(width), lines * 14) + 18)
@@ -89,14 +81,11 @@ def add_hint(layout, text, width=210):
 
 
 def rich_tooltip(text):
-    # Qt word-wraps a tooltip only when it is rich text; a bare "<" (as in "K < 0") must not open a tag
     text = re.sub(r'<(?=\s)', '&lt;', text)
     return f"<p style='white-space:normal'>{text}</p>"
 
 
 def apply_tooltips(widget, tips):
-    # tips: {attribute name of a control: text}. The text also goes on the control's title label (a slider row's
-    # title, or the QLabel placed right before the control in the same layout), so hovering the label works too.
     for name, text in tips.items():
         control = getattr(widget, name, None)
         if control is None or not text:
@@ -108,7 +97,7 @@ def apply_tooltips(widget, tips):
             idx = layout.indexOf(control)
             if idx > 0 and layout.itemAt(idx - 1).widget() is not None:
                 label = layout.itemAt(idx - 1).widget()
-                if not isinstance(label, QLabel) or label.property('paramLabel'):  # a value readout is no title
+                if not isinstance(label, QLabel) or label.property('paramLabel'):
                     label = None
         if label is not None:
             label.setToolTip(rich_tooltip(text))

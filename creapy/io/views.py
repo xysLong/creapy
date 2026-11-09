@@ -1,13 +1,3 @@
-"""
-The views of creapy.io as plain functions, free of Qt: prepare_*(fix, sac, params, ctx, progress) does the slow
-numeric work (runs in a worker thread, fills the datasets' caches), draw_*(fix, sac, params, ctx, fig, ax) draws
-from those caches on the GUI thread and may return a table (DataFrame). The main window, the compare grid and the
-batch export all call the same functions, so a figure looks the same wherever it is produced.
-
-ctx (a dict) carries what a view needs beyond its parameters: 'grouping' (subj -> group, restricted to the
-dataset), 'note' (text describing the active filter), 'stim' (stimulus name), 'vmax' (shared heatmap scale or
-None), 'dark' (dark theme colours), 'selected_subject' (the one participant of the filter bar, if any).
-"""
 import os
 import numpy as np
 import pandas as pd
@@ -30,12 +20,10 @@ DARK_RC = {'text.color': 'white', 'axes.labelcolor': 'white', 'axes.edgecolor': 
            'legend.facecolor': '#1e2230', 'legend.edgecolor': '#4da3ff'}
 
 
-GUI_BOXPLOT = {'box_color': '#2b3a55', 'median_color': '#4da3ff', 'point_color': 'white'}  # dark-theme boxplots
+GUI_BOXPLOT = {'box_color': '#2b3a55', 'median_color': '#4da3ff', 'point_color': 'white'}
 
 
 class Hint(Exception):
-    # Raised by a view when the user has to do something first (assign groups, draw an AOI ...):
-    # shown as a friendly information box, not as a failure.
     pass
 
 
@@ -45,7 +33,6 @@ def title_with_note(ax, text, ctx, **kwargs):
 
 
 def group_series(fix, sac, ctx):
-    # [(label, fix, sac)]: one entry per group when groups exist and the filter is not already one person/group
     grouping = ctx.get('grouping')
     if not grouping or not ctx.get('per_group', True) or ctx.get('filtered_participants'):
         return [(None, fix, sac)]
@@ -54,15 +41,11 @@ def group_series(fix, sac, ctx):
     groups = {name: subs for name, subs in groups.items() if subs}
     if not groups:
         return [(None, fix, sac)]
-    subset_fn = ctx.get('subset_fn')  # the GUI caches subsets per (stimulus, selection)
+    subset_fn = ctx.get('subset_fn')
     if subset_fn is not None:
         return [(name, *subset_fn(subs)) for name, subs in groups.items()]
     return split_by_group(fix, sac, grouping)
 
-
-# =====================================================================================================
-# Image views
-# =====================================================================================================
 
 def prepare_fixation_heatmap(fix, sac, params, ctx, progress):
     fix.prepare_heatmap(bw_method=params['bw_method'], num_levels=params['num_levels'], vmax=ctx.get('vmax'))
@@ -90,15 +73,10 @@ def draw_saccade_heatmap(fix, sac, params, ctx, fig, ax):
 
 
 def draw_rose(fix, sac, params, ctx, fig, ax):
-    # ax must be polar
     ax.grid(color='#555a6a', alpha=0.6)
     sac.make_rose_plot(ax=ax, hull_args={'color': 'white', 'lw': 1.2}, **params)
     title_with_note(ax, f"Saccade directions · {sac.n_subjects()} participants", ctx, color='white')
 
-
-# =====================================================================================================
-# Areas of interest
-# =====================================================================================================
 
 def prepare_aoi(fix, sac, params, ctx, progress):
     if params['display'] == 'Image with AOIs' and params['underlay'] == 'Fixation heatmap':
@@ -106,7 +84,6 @@ def prepare_aoi(fix, sac, params, ctx, progress):
 
 
 def draw_aoi(fix, sac, params, ctx, fig, ax):
-    # returns a table for the table displays; the image display draws the AOIs over the chosen underlay
     aois = fix.areas_of_interest
     display = params['display']
     stim = ctx.get('stim', '')
@@ -145,7 +122,6 @@ def draw_aoi(fix, sac, params, ctx, fig, ax):
         title_with_note(ax, f"AOI sequence per participant · {fix.n_subjects()} participants", ctx)
         fig.tight_layout()
         return df_seq, None
-    # Image with AOIs
     if params['underlay'] == 'Fixation heatmap':
         fix.make_heatmap(ax, grayscale=params['grayscale'], alpha=0.5, scatter_alpha=0.)
     else:
@@ -158,13 +134,7 @@ def draw_aoi(fix, sac, params, ctx, fig, ax):
     return None
 
 
-# =====================================================================================================
-# Time series + spectrum
-# =====================================================================================================
-
 def curve_values(fix, sac, curve):
-    # (dataset the values belong to, values aligned with its df, y label): creapy.stats.timeseries.value_series
-    # with the GUI's wording for the two optional columns
     if curve == 'Pupil Size' and fix.pupil_col is None:
         raise Hint("The imported table has no pupil column. Re-import and set the optional field "
                    "'Pupil size' to see this curve.")
@@ -185,7 +155,7 @@ def draw_time_series(fix, sac, params, ctx, fig, ax):
             color = palette(i % 10)
             if curve == 'Fixations in AOIs':
                 if not fix_.areas_of_interest:
-                    fix_.set_bottom_up_aoi()  # default AOI: the most-viewed heatmap regions
+                    fix_.set_bottom_up_aoi()
                     if ctx.get('on_default_aoi'):
                         ctx['on_default_aoi'](fix_)
                 fix_.make_aoi_percentage_curve(None, ax, sigma=sigma, n_std=n_std, color=color if label else None)
@@ -215,7 +185,7 @@ def draw_time_series(fix, sac, params, ctx, fig, ax):
         ax.set_ylabel("Normalised Lomb–Scargle power")
         title_with_note(ax, f"Rhythm in {curve.lower()} · {fix.n_subjects()} participants", ctx)
         table = pd.concat(ls, ignore_index=True)
-    else:  # Scalogram
+    else:
         if curve == 'Fixations in AOIs':
             raise Hint("The scalogram needs a per-fixation value: choose fixation duration, saccade amplitude, "
                        "K, pupil size or viewing distance.")
@@ -236,12 +206,7 @@ def draw_time_series(fix, sac, params, ctx, fig, ax):
     return table
 
 
-# =====================================================================================================
-# Pairwise similarity (HeatMatch saccades, scanpath comparison)
-# =====================================================================================================
-
 def prepare_similarity(fix, sac, params, ctx, progress):
-    # Fills the SaccadeData caches; returns nothing (draw_similarity reads the caches again, instantly)
     if sac.n_subjects() < 2:
         raise Hint("Similarity analysis needs saccades from at least two participants: "
                    "select a group or all participants in the Show bar.")
@@ -260,12 +225,11 @@ def prepare_similarity(fix, sac, params, ctx, progress):
 
 
 def draw_pairwise(result, profile, view, which, cmap, grouping, fig, ax, label):
-    # Shared by the HeatMatch and the scanpath comparison views
     table = None
     if view == 'Similarity Matrix':
         table = result.matshow(which=which, grouping=grouping, ax=ax, cmap=cmap, group_color='white')
         if grouping:
-            ax.xaxis.tick_bottom()  # free the top edge for the group brackets
+            ax.xaxis.tick_bottom()
         table = table.reset_index()
     elif view == 'Group Boxplot':
         if not grouping or len(set(grouping.values())) < 2:
@@ -280,7 +244,7 @@ def draw_pairwise(result, profile, view, which, cmap, grouping, fig, ax, label):
     elif view == 'Similarity over Time':
         curves = profile.show_profile(which=which, grouping=grouping, ax=ax)
         table = pd.concat([df_.assign(curve=name) for name, df_ in curves.items()]).reset_index()
-    else:  # Viewer Map (MDS)
+    else:
         result.show_multidimensional_scaling(grouping=grouping, which=which, ax=ax)
         ax.set_title(f"{label}: participants placed by similarity (spectral embedding)", fontsize=10)
     fig.tight_layout()
@@ -333,7 +297,6 @@ def draw_scanpath_comparison(fix, sac, params, ctx, fig, ax):
     which = params['which'] if params['which'] in result.scores else result.default_score()
     labels = {'multimatch': 'MultiMatch', 'scanmatch': 'ScanMatch', 'cross_recurrence': 'Cross-recurrence'}
     if params['view'] == 'Measure overview' and params['method'] == 'multimatch':
-        # the five MultiMatch dimensions side by side: mean over all pairs (and within/between groups if any)
         df_over = result.show_score_overview(grouping=ctx.get('grouping'), ax=ax)
         df_over['measure'] = df_over['measure'].str.replace('mm_', '', regex=False)
         ax.set_title("MultiMatch: the five dimensions of scanpath similarity", fontsize=10)
@@ -342,10 +305,6 @@ def draw_scanpath_comparison(fix, sac, params, ctx, fig, ax):
     return draw_pairwise(result, None, params['view'] if params['view'] != 'Measure overview' else 'Similarity Matrix',
                          which, params['cmap'], ctx.get('grouping'), fig, ax, label=f"{labels[params['method']]} {which}")
 
-
-# =====================================================================================================
-# Recurrence
-# =====================================================================================================
 
 def draw_recurrence(fix, sac, params, ctx, fig, ax):
     radius = float(params['radius_share'] * np.hypot(fix.width, fix.height))
@@ -373,7 +332,6 @@ def draw_recurrence(fix, sac, params, ctx, fig, ax):
                         f"{radius:.0f} px, minimum line {params['min_line']}. recurrence = % of fixation pairs "
                         "that re-visit a location; determinism = % of recurrences in repeated sequences; "
                         "laminarity = % in dwell clusters; corm = how late revisits happen (0–100).")
-    # Boxplot by group
     if not grouping or len(set(grouping.values())) < 2:
         raise Hint("Assign participants to at least two groups first (Analysis > Assign Participants to Groups).")
     measure = params['measure']
@@ -382,10 +340,6 @@ def draw_recurrence(fix, sac, params, ctx, fig, ax):
     fig.tight_layout()
     return df_rqa
 
-
-# =====================================================================================================
-# Statistics
-# =====================================================================================================
 
 def draw_statistics(fix, sac, params, ctx, fig, ax):
     grouping = ctx.get('grouping')
@@ -417,7 +371,6 @@ def draw_statistics(fix, sac, params, ctx, fig, ax):
             df_aoi.insert(1, 'group', df_aoi['participant'].astype(object).map(grouping))
         return df_aoi, (f"<b>{stim}</b>: participant × AOI{suffix}. dwell_time in {fix.dur_unit}; "
                         "time_to_first_fixation in s from the participant's first fixation; NaN = never fixated.")
-    # Boxplot by group
     if not grouping:
         raise Hint("Assign participants to groups first (Analysis > Assign Participants to Groups).")
     measure = params['measure'] if params['measure'] in measures else measures[0]
@@ -427,11 +380,6 @@ def draw_statistics(fix, sac, params, ctx, fig, ax):
     return df_stats
 
 
-# =====================================================================================================
-# Registry
-# =====================================================================================================
-
-# name -> (prepare or None, draw, kind) ; kind: 'image' (stimulus axes, no frame), 'plot' (dark axes), 'polar'
 VIEW_SPECS = {
     "Fixation Heatmap": (prepare_fixation_heatmap, draw_fixation_heatmap, 'image'),
     "Fixation Scanpath": (None, draw_fixation_scanpath, 'image'),
@@ -446,7 +394,6 @@ VIEW_SPECS = {
     "Statistics": (None, draw_statistics, 'plot'),
 }
 
-# Views whose figure can be laid out as a grid of panels (compare mode / multi-stimulus overview)
 COMPARABLE_VIEWS = ["Fixation Heatmap", "Fixation Scanpath", "Saccade Scanpath", "Saccade Heatmap",
                     "Saccade Directions", "Areas of Interest"]
 

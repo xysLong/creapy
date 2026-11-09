@@ -76,7 +76,7 @@ column.</p>
 
 <h3>Tobii Pro Lab</h3>
 <p><b>Event-based metrics export</b> (Analyze &gt; Metrics export, <i>event-based</i>; TSV, one row per fixation,
-saccade or glance). This is the file the lab usually shares (e.g. the Belvedere WOQ rooms). creapy keeps the
+saccade or glance). This is the file usually shared within a team. creapy keeps the
 fixation rows: <i>Media</i> becomes the stimulus (the snapshot), <i>FixationPointX/Y</i> (0–1 on the medium) are
 scaled to the snapshot image, <i>Start</i>/<i>Duration</i> are ms from the start of each interval of the time of
 interest, and every interval counts as one trial (times restart per interval). <i>Average_pupil_diameter</i> and
@@ -186,7 +186,6 @@ Nothing is sent anywhere; you can delete the files at any time.</p>
 
 
 class HelpDialog(QDialog):
-
     def __init__(self, title, html, parent=None, size=(720, 640)):
         super().__init__(parent)
         self.setWindowTitle(title)
