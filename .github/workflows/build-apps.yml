@@ -11,9 +11,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14      # Apple silicon
+          - os: macos-15
             script: bash packaging/build.sh
-          - os: macos-15-intel  # Intel (macos-13 was retired in December 2025)
+          - os: macos-15-intel
             script: bash packaging/build.sh
           - os: windows-latest
             script: powershell -ExecutionPolicy Bypass -File packaging\build.ps1
