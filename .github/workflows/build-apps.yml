@@ -15,7 +15,7 @@ jobs:
         include:
           - os: macos-14      # Apple silicon
             script: bash packaging/build.sh
-          - os: macos-13      # Intel
+          - os: macos-15-intel  # Intel (macos-13 was retired in December 2025)
             script: bash packaging/build.sh
           - os: windows-latest
             script: powershell -ExecutionPolicy Bypass -File packaging\build.ps1

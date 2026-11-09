@@ -6,7 +6,7 @@ PyInstaller from this folder's spec.
 | Platform | Build on | Result | Hand out as |
 |---|---|---|---|
 | macOS (Apple silicon) | any Apple-silicon Mac (this laptop) | `dist/creapy.io.app` | `creapy.io-<version>-macOS.zip` |
-| macOS (Intel) | an Intel Mac, or GitHub Actions `macos-13` | `dist/creapy.io.app` | `creapy.io-<version>-macOS-intel.zip` |
+| macOS (Intel) | an Intel Mac, or GitHub Actions `macos-15-intel` | `dist/creapy.io.app` | `creapy.io-<version>-macOS-intel.zip` |
 | Windows 10/11 | a Windows machine (office PC) or GitHub Actions | `dist/creapy.io/creapy.io.exe` + folder | `creapy.io-<version>-Windows.zip` |
 
 A bundle only runs on the platform it was built on. Expect 300–500 MB unpacked (Qt, matplotlib, scipy, sklearn).

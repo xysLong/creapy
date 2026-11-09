@@ -11,8 +11,9 @@ if ($LASTEXITCODE -ne 0) { throw "PyInstaller failed" }
 
 Write-Host "Self-test ..."
 $env:QT_QPA_PLATFORM = "offscreen"
-& "dist\creapy.io\creapy.io.exe" --selftest
-if ($LASTEXITCODE -ne 0) { throw "Self-test failed" }
+# a windowed exe returns to PowerShell at once when called with "&": Start-Process -Wait is needed to get its exit code
+$proc = Start-Process -FilePath "dist\creapy.io\creapy.io.exe" -ArgumentList "--selftest" -Wait -PassThru -NoNewWindow
+if ($proc.ExitCode -ne 0) { throw "Self-test failed (exit code $($proc.ExitCode))" }
 Remove-Item Env:QT_QPA_PLATFORM
 
 $zip = "dist\creapy.io-$version-Windows.zip"
