@@ -70,6 +70,7 @@ class MainWindow(QMainWindow):
     VIEWS = ["Fixation Heatmap", "Fixation Scanpath", "Saccade Scanpath", "Saccade Heatmap",
              "Saccade Directions", "Areas of Interest", "Time Series", "Saccade Similarity", "Scanpath Comparison",
              "Recurrence", "Statistics"]
+    ADVANCED_VIEWS = ["Scanpath Comparison", "Recurrence"]
 
     def __init__(self, synchronous=None):
         super().__init__()
@@ -145,6 +146,11 @@ class MainWindow(QMainWindow):
         analysis_menu.addAction(self.compare_action)
         analysis_menu.addAction(self.stop_compare_action)
         analysis_menu.addAction(self.make_action("Reset Filters", self.reset_filters))
+        analysis_menu.addSeparator()
+        self.advanced_action = QAction("Show Advanced Analyses", self, checkable=True)
+        self.advanced_action.setChecked(self.advanced_views_shown())
+        self.advanced_action.toggled.connect(self.toggle_advanced_views)
+        analysis_menu.addAction(self.advanced_action)
 
         logging_menu = menubar.addMenu("&Logging")
         self.logging_action = QAction("Record session log (on this computer only)", self, checkable=True)
@@ -192,6 +198,25 @@ class MainWindow(QMainWindow):
 
     def show_help(self, title, html):
         help_texts.HelpDialog(title, html, parent=self).exec()
+
+    def advanced_views_shown(self):
+        return self.settings.value("views/advanced", False, type=bool)
+
+    def toggle_advanced_views(self, shown):
+        self.settings.setValue("views/advanced", bool(shown))
+        self.log.log('advanced_views', shown=bool(shown))
+        self.apply_advanced_views()
+
+    def apply_advanced_views(self):
+        if not hasattr(self, 'left_toolbar'):
+            return
+        shown = self.advanced_views_shown()
+        for name in self.ADVANCED_VIEWS:
+            self.left_toolbar.item(self.VIEWS.index(name)).setHidden(not shown)
+        self.time_series_toolbar.set_advanced(shown)
+        current = self.left_toolbar.currentRow()
+        if not shown and current >= 0 and self.VIEWS[current] in self.ADVANCED_VIEWS:
+            self.left_toolbar.setCurrentRow(0)
 
     def toggle_logging(self, enabled):
         self.log.set_enabled(enabled)
@@ -745,8 +770,9 @@ class MainWindow(QMainWindow):
             if self.compare.get('kind') == 'time':
                 self.compare['items'] = [tuple(w) for w in self.compare['items']]
             self.update_compare_indicator()
-        if state.get('view') in self.VIEWS:
-            self.left_toolbar.setCurrentRow(self.VIEWS.index(state['view']))
+        view = state.get('view')
+        if view in self.VIEWS and (view not in self.ADVANCED_VIEWS or self.advanced_views_shown()):
+            self.left_toolbar.setCurrentRow(self.VIEWS.index(view))
         self.setWindowTitle(f"creapy.io - {os.path.basename(path)}")
         self.log.log('project_opened', path=os.path.basename(path))
 
@@ -838,6 +864,7 @@ class MainWindow(QMainWindow):
                 toolbar.groups_btn.clicked.connect(self.assign_groups)
             if hasattr(toolbar, 'export_btn'):
                 toolbar.export_btn.clicked.connect(self.export_table)
+        self.apply_advanced_views()
         self.aoi_toolbar.remove_btn.clicked.connect(self.remove_selected_aoi)
         self.aoi_toolbar.clear_btn.clicked.connect(self.clear_aois)
         self.aoi_toolbar.save_aoi_btn.clicked.connect(self.save_aois)

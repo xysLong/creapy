@@ -52,6 +52,8 @@ over the canvas has a Cancel button.</p>
 <li><b>Statistics</b>: one row per participant (fixations, durations, saccades, scanpath length,
     coefficient K ...), group comparison with t-test/ANOVA, AOI metrics. Export as CSV/Excel.</li>
 </ul>
+<p>Scanpath Comparison, Recurrence and the periodogram and scalogram displays of Time Series are advanced analyses:
+switch them on under <i>Analysis &gt; Show Advanced Analyses</i>.</p>
 
 <h3>Good habits</h3>
 <ul>

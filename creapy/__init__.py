@@ -15,7 +15,7 @@ from creapy.similarity.heatmatch_result import PairwiseSimilarityResult, HeatMat
 from creapy.misc.utils import natural_sorted, find_images
 import os
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 def load_fixations(path, mapping=None, **mapping_kwargs):

@@ -41,6 +41,21 @@ def test_every_view_renders_on_example(qapp, silent_boxes):
     assert failures == [], failures
 
 
+def test_advanced_views_hidden_by_default(qapp, silent_boxes):
+    w = open_example(qapp)
+    w.settings.setValue("views/advanced", False)
+    w.apply_advanced_views()
+    hidden = [w.left_toolbar.item(w.VIEWS.index(n)).isHidden() for n in w.ADVANCED_VIEWS]
+    assert all(hidden) and w.time_series_toolbar.display_selector.count() == 1
+    w.advanced_action.setChecked(True)
+    assert not w.left_toolbar.item(w.VIEWS.index("Recurrence")).isHidden()
+    assert w.time_series_toolbar.display_selector.count() == 3
+    w.left_toolbar.setCurrentRow(w.VIEWS.index("Recurrence"))
+    w.advanced_action.setChecked(False)
+    assert w.left_toolbar.currentRow() == 0
+    w.settings.remove("views/advanced")
+
+
 def test_filters_groups_aois_and_tables(qapp, silent_boxes):
     w = open_example(qapp)
     w.grouping = {s: ('expert' if s <= 'P06' else 'layperson') for s in w.all_subjects}

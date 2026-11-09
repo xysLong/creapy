@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 (2026-11)
+
+- Scanpath Comparison, Recurrence and the periodogram and scalogram displays of Time Series are advanced analyses,
+  hidden until switched on under Analysis > Show Advanced Analyses (remembered between sessions).
+- Desktop apps are built on the macos-15 runner.
+
 ## 0.1.0 (2026-11)
 
 First public release: the `creapy` library and the `creapy.io` desktop app.

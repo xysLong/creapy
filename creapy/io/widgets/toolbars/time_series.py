@@ -54,7 +54,8 @@ class TimeSeriesToolbar(QWidget):
                                                "viewing time; the dashed tail marks the last 5 s where fewer data "
                                                "remain. K &gt; 0 = focal, K &lt; 0 = ambient (Krejtz et al. 2016).")
 
-        top_layout.addWidget(QLabel("Display:"))
+        self.display_label = QLabel("Display:")
+        top_layout.addWidget(self.display_label)
         self.display_selector = QComboBox()
         self.display_selector.addItems(self.AVAILABLE_DISPLAY)
         self.display_selector.currentIndexChanged.connect(self.update_labels_and_run)
@@ -96,6 +97,18 @@ class TimeSeriesToolbar(QWidget):
 
         self.update_labels_and_run(run=False)
         utils.apply_tooltips(self, dict(glossary.COMMON_TIPS, **glossary.TOOLTIPS['time_series']))
+
+    def set_advanced(self, shown):
+        allowed = self.AVAILABLE_DISPLAY if shown else self.AVAILABLE_DISPLAY[:1]
+        current = self.display_selector.currentText()
+        self.display_selector.blockSignals(True)
+        self.display_selector.clear()
+        self.display_selector.addItems(allowed)
+        if current in allowed:
+            self.display_selector.setCurrentText(current)
+        self.display_selector.blockSignals(False)
+        self.display_label.setVisible(shown)
+        self.display_selector.setVisible(shown)
 
     def get_params(self):
         curve = self.curve_selector.currentText()
