@@ -1,7 +1,7 @@
 # creapy
 
 **creapy** (pronounced /ˈkɹiə.paɪ/) is eye-tracking visual analytics for art history and empirical aesthetics, developed at the
-**CReA Lab** (Lab for Cognitive Research in Art History, Department of Art History, University of Vienna).
+[**CReA Lab** (Lab for Cognitive Research in Art History, Department of Art History, University of Vienna)](https://crea.univie.ac.at/).
 
 Two layers for two audiences (the division announced at DHd 2026: maximal ease of use in the app, analytical
 depth and flexibility in the library):
