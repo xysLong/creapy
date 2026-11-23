@@ -1,0 +1,203 @@
+import numpy as np
+import functools
+import re
+import matplotlib.patches as patches
+import matplotlib.patheffects as pe
+import matplotlib.path as mpath
+from shapely import area, centroid, covers
+from shapely.ops import unary_union
+from shapely.geometry import Point, Polygon, LinearRing, box
+
+
+class AOI:
+    """One area of interest: a named shapely geometry in image pixels (x right, y down)."""
+
+    def __init__(self, name="Unnamed", geom=None, paths=None):
+        assert (geom is None) != (paths is None), "EITHER 'geom' OR 'paths' must be provided, but not both"
+        self.__name = name
+        self.__geom = geom if paths is None else AOI.__multiple_paths_to_single_geom(paths)
+        self.__path = AOI.__single_geom_to_single_path(self.__geom)
+        self.__disconnected_polygons = AOI.__extract_disconnected_polygons(self.__geom)
+
+    @property
+    def name(self):
+        """The AOI's name (read-only)."""
+        return self.__name
+
+    @property
+    def geom(self):
+        """The shapely geometry (Polygon or MultiPolygon) in image pixels, read-only."""
+        return self.__geom
+
+    def area(self):
+        """Area of the AOI in square pixels."""
+        return float(area(self.__geom))
+
+    def contains(self, points):
+        """True for each point inside or on the boundary of the AOI."""
+        return covers(self.__geom, points)
+
+    @staticmethod
+    def rectangle(name, x0, y0, x1, y1):
+        """Rectangular AOI from two opposite corners (x0, y0), (x1, y1) in pixels."""
+        return AOI(name=name, geom=box(min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)))
+
+    @staticmethod
+    def polygon(name, vertices):
+        """Polygon AOI from a list of (x, y) vertices in pixels, at least three."""
+        assert len(vertices) >= 3, "A polygon AOI needs at least three corners."
+        return AOI(name=name, geom=Polygon(vertices).buffer(0))
+
+    def to_record(self):
+        """Dict {'name', 'wkt'} describing the AOI as text (WKT), for saving AOI sets to JSON; see from_record."""
+        return {'name': self.__name, 'wkt': self.__geom.wkt}
+
+    @staticmethod
+    def from_record(record):
+        """Rebuild an AOI (or a LabelAOI, see there) from a to_record() dict."""
+        if 'column' in record:
+            return LabelAOI.from_record(record)
+        from shapely import wkt
+        return AOI(name=record['name'], geom=wkt.loads(record['wkt']))
+
+    def show(self, ax, color='yellow', alpha=0.4, label=True):
+        """Draw the AOI on a matplotlib axes as a translucent patch."""
+        ax.add_patch(patches.PathPatch(self.__path, facecolor=color, alpha=alpha, edgecolor=color, linewidth=1.5))
+        if not label:
+            return
+        polygons = sorted([(area(polygon), polygon) for polygon in self.__disconnected_polygons], reverse=True)
+        center = centroid(polygons[0][1])
+        ax.text(center.x, center.y, self.__name, ha='center', va='center', color="black",
+                path_effects=[
+                    pe.Stroke(linewidth=4, foreground='white', alpha=0.7),
+                    pe.Normal()
+                ])
+        for _, polygon in polygons[1:]:
+            center_ = centroid(polygon)
+            ax.plot([center.x, center_.x], [center.y, center_.y], color='black', alpha=0.3, linestyle='--')
+
+    @staticmethod
+    def __multiple_paths_to_single_geom(paths):
+        polygons = [AOI.__single_path_to_multiple_geoms(path) for path in paths]
+        flattened_polygons = functools.reduce(lambda a, b: a + b, polygons)
+        return unary_union(flattened_polygons)
+
+    @staticmethod
+    def __extract_disconnected_polygons(geom):
+        if geom.geom_type == 'Polygon':
+            return [geom]
+        elif geom.geom_type == 'MultiPolygon':
+            return list(geom.geoms)
+        elif geom.geom_type == 'GeometryCollection':
+            return [g for g in geom.geoms if isinstance(g, Polygon)]
+        else:
+            return []
+
+    @staticmethod
+    def __single_path_to_multiple_geoms(path):
+        polys = []
+        vertices = path.vertices
+        codes = path.codes
+        if codes is None:
+            if np.allclose(vertices[0], vertices[-1]):
+                polys.append(Polygon(vertices))
+            else:
+                polys.append(LinearRing(vertices))
+            return polys
+
+        current = []
+        for vert, code in zip(vertices, codes):
+            if code == mpath.Path.MOVETO:
+                if current:
+                    ring = np.array(current)
+                    if np.allclose(ring[0], ring[-1]):
+                        polys.append(Polygon(ring))
+                    else:
+                        polys.append(LinearRing(ring))
+                current = [vert]
+            else:
+                current.append(vert)
+
+        if current:
+            ring = np.array(current)
+            if np.allclose(ring[0], ring[-1]):
+                polys.append(Polygon(ring))
+            else:
+                polys.append(LinearRing(ring))
+        return polys
+
+    @staticmethod
+    def __single_geom_to_single_path(geom):
+        if geom.geom_type == 'Polygon':
+            verts = np.array(geom.exterior.coords)
+            codes = ([mpath.Path.MOVETO] + [mpath.Path.LINETO] * (len(verts) - 2) + [mpath.Path.CLOSEPOLY])
+            return mpath.Path(verts, codes)
+        elif geom.geom_type == 'MultiPolygon':
+            all_verts = []
+            all_codes = []
+            for polygon in geom.geoms:
+                verts = np.array(polygon.exterior.coords)
+                codes = ([mpath.Path.MOVETO] + [mpath.Path.LINETO] * (len(verts) - 2) + [mpath.Path.CLOSEPOLY])
+                all_verts.extend(verts)
+                all_codes.extend(codes)
+            return mpath.Path(np.array(all_verts), all_codes)
+        else:
+            raise ValueError(f"Unsupported geometry type: {geom.geom_type}")
+
+
+class LabelAOI:
+    """An area given by a label the eye tracker attached to each fixation (a Tobii Pro Lab AOI hit), not by a shape.
+
+    `column` is the column of the fixation table holding the label; a fixation inside several overlapping areas
+    carries them comma-separated. `values` are the labels that count as this area (default: the name itself);
+    `size` is the area in pixels of the original medium when the export states it."""
+
+    def __init__(self, name, column, values=None, size=None):
+        self.__name = name
+        self.column = column
+        self.values = set(values) if values is not None else {name}
+        self.size = size
+
+    @property
+    def name(self):
+        """The area's name (read-only)."""
+        return self.__name
+
+    def area(self):
+        """Area in pixels of the original medium if the export stated it, else NaN."""
+        return float(self.size) if self.size is not None else float('nan')
+
+    def contains_labels(self, labels):
+        """True for each fixation whose (comma-separated) labels include one of this area's values."""
+        return np.array([bool(self.values.intersection(split_labels(label))) for label in labels], dtype=bool)
+
+    def to_record(self):
+        """Dict {'name', 'column', 'values', 'size'} for JSON; see AOI.from_record."""
+        return {'name': self.__name, 'column': self.column, 'values': sorted(self.values), 'size': self.size}
+
+    @staticmethod
+    def from_record(record):
+        """Rebuild a LabelAOI from a to_record() dict."""
+        return LabelAOI(record['name'], record['column'], record.get('values'), record.get('size'))
+
+    def show(self, ax, color='yellow', alpha=0.4, label=True):
+        """Nothing to draw: a label area has no shape of its own (FixationData draws the fixations it contains)."""
+        return None
+
+
+def clean_label(label):
+    """A label as text: numbers that a table reader turned into floats (1101.0) come back as '1101'."""
+    if isinstance(label, float):
+        return str(int(label)) if float(label).is_integer() else str(label)
+    text = str(label).strip()
+    if re.fullmatch(r'-?\d+\.0+', text):
+        text = text.split('.')[0]
+    return text
+
+
+def split_labels(label):
+    """The set of labels in one comma-separated cell of the fixation table ('' and NaN give an empty set)."""
+    if label is None or (isinstance(label, float) and np.isnan(label)):
+        return set()
+    parts = [clean_label(part) for part in str(label).split(',')]
+    return {part for part in parts if part and part.lower() != 'nan'}

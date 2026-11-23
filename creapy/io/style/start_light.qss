@@ -1,0 +1,93 @@
+/* ---------- Global ---------- */
+
+QMainWindow {
+    background-color: #ffffff;
+}
+
+QWidget {
+    color: #222;
+    font-family: "Avenir", "Lato", "Helvetica", "Arial";
+}
+
+/* ---------- Header ---------- */
+
+QLabel#LogoLabel {
+    font-size: 40px;
+    margin-bottom: 4px;
+}
+
+QLabel#ThumbLabel {
+    background: transparent;
+    border: none;
+}
+
+
+QLabel#TitleLabel {
+    font-size: 48px;
+    font-weight: 1000;
+    color: #111;
+}
+
+QLabel#SubtitleLabel {
+    font-size: 18px;
+    color: #555;
+    margin-top: 4px;
+}
+
+QLabel#CreditsLabel {
+    font-family: "Courier New", "Consolas", "Liberation Mono", "monospace";
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* ---------- Cards ---------- */
+QFrame#DataCard {
+    background-color: rgba(255, 255, 255, 0.96);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 18px;
+}
+
+QFrame#DataCard:hover {
+    border: 1px solid #007aff;
+    background-color: #f9f9f9;
+}
+
+/* ---------- Text inside cards ---------- */
+QLabel#SectionTitle {
+    font-size: 28px;
+    font-weight: 600;
+    color: #222;
+}
+
+QLabel#BodyLabel {
+    font-size: 16px;
+    color: #555;
+}
+
+/* ---------- Buttons ---------- */
+QPushButton {
+    min-height: 32px;
+    padding: 6px 18px;
+    border-radius: 16px;
+    font-weight: 600;
+    font-size: 18px;
+    background-color: #ffffff;
+    color: #007aff;
+    border: 1px solid rgba(0, 122, 255, 0.7);
+}
+
+/* hover & pressed states */
+QPushButton:hover:!disabled {
+    background-color: rgba(0, 122, 255, 0.07);
+}
+
+QPushButton:pressed:!disabled {
+    background-color: rgba(0, 122, 255, 0.15);
+}
+
+QPushButton:disabled {
+    background-color: #c7ced9;
+    color: #7a8494;
+}

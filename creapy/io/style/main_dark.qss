@@ -1,0 +1,125 @@
+/* Workspace: navigation, control panel, filter bar, canvas furniture. */
+
+QListWidget#NavList {
+    background-color: #181a20;
+    border: none;
+    border-right: 1px solid #2c3039;
+    border-radius: 0;
+    padding: 8px 6px;
+    font-weight: 600;
+}
+
+QListWidget#NavList::item {
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin: 1px 0;
+    color: #c9cdd6;
+}
+
+QListWidget#NavList::item:hover {
+    background-color: #22262f;
+}
+
+QListWidget#NavList::item:selected {
+    background-color: rgba(90, 169, 255, 0.16);
+    color: #ffffff;
+}
+
+/* views not offered in the current recording setting: grey, no hover highlight (the tooltip says why) */
+QListWidget#NavList::item:disabled {
+    color: #4f5464;
+}
+
+QListWidget#NavList::item:disabled:hover {
+    background-color: transparent;
+}
+
+/* ---------- Control panel ---------- */
+
+QWidget#RightPanel {
+    background-color: #181a20;
+    border-left: 1px solid #2c3039;
+}
+
+QWidget#heatmapToolbar {
+    background-color: #181a20;
+}
+
+QScrollArea#PanelScroll, QScrollArea#PanelScroll > QWidget > QWidget {
+    background: transparent;
+    border: none;
+}
+
+QLabel#PanelTitle {
+    font-size: 14px;
+    font-weight: 700;
+    color: #f6f7f9;
+}
+
+QLabel[boldTitle="true"] {
+    font-weight: 700;
+    color: #e8e9ed;
+}
+
+QLabel[sectionTitle="true"] {
+    font-size: 12px;
+    color: #9ba0ab;
+}
+
+QLabel[paramLabel="true"] {
+    color: #9ba0ab;
+    font-weight: 600;
+}
+
+QFrame#sectionSeparator {
+    border: none;
+    border-top: 1px solid #2c3039;
+    background-color: transparent;
+}
+
+QToolButton#InfoButton {
+    border: 1px solid #6c7180;
+    border-radius: 9px;
+    min-width: 18px; max-width: 18px; min-height: 18px; max-height: 18px;
+    padding: 0; margin: 0;
+    font-size: 11px; font-weight: 700;
+    color: #9ba0ab;
+    background: transparent;
+}
+
+QToolButton#InfoButton:hover, QToolButton#InfoButton:checked {
+    color: #5aa9ff;
+    border-color: #5aa9ff;
+}
+
+/* ---------- Filter bar and canvas ---------- */
+
+QFrame#FilterBar {
+    background-color: #181a20;
+    border-bottom: 1px solid #2c3039;
+}
+
+QLabel#FigureCaption {
+    font-size: 12px;
+    color: #9ba0ab;
+}
+
+/* ---------- Explanations ---------- */
+
+QDockWidget#ExplainerDock {
+    titlebar-close-icon: none;
+}
+
+QDockWidget#ExplainerDock::title {
+    background: #20232b;
+    color: #c9cdd6;
+    padding: 8px 10px;
+    font-weight: 700;
+    border-bottom: 1px solid #2c3039;
+}
+
+QDockWidget#ExplainerDock QTextBrowser {
+    border: none;
+    border-radius: 0;
+    padding: 10px;
+}
