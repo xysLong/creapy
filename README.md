@@ -11,7 +11,7 @@ for those who do.
 - `creapy`, the library: everything the app shows is one documented Python call
   ([`docs/LIBRARY.md`](https://github.com/xysLong/creapy/blob/main/docs/LIBRARY.md), `tutorial.ipynb`).
 
-Status: version 0.2.1, prototype in active use at the CReA Lab; the API may still change before 1.0.
+Status: prototype in active use at the CReA Lab (current version in `CHANGELOG.md`); the API may still change before 1.0.
 Presented as a poster at DHd 2026 (see Citation). Source: <https://github.com/xysLong/creapy> (MIT).
 
 ## Two kinds of eye tracking
@@ -44,8 +44,8 @@ described on its [Methods and Software](https://crea.univie.ac.at/projects/metho
 
 ## Getting the app
 
-Download `creapy.io-0.2.1-macOS.zip` (Macs with an Apple chip), `-macOS-intel.zip` (older Macs) or
-`-Windows.zip` from the [releases page](https://github.com/xysLong/creapy/releases), unzip, double-click.
+Download `creapy.io-...-macOS.zip` (Macs with an Apple chip), `creapy.io-...-macOS-intel.zip` (older Macs) or
+`creapy.io-...-Windows.zip` from the [releases page](https://github.com/xysLong/creapy/releases), unzip, double-click.
 The first start needs one extra click in a security dialog:
 [`docs/INSTALL_APP.md`](https://github.com/xysLong/creapy/blob/main/docs/INSTALL_APP.md) walks through it.
 
