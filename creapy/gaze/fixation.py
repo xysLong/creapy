@@ -5,7 +5,6 @@ import matplotlib.ticker as ticker
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import scipy as sp
 import shapely
 from creapy.aoi.aoi import AOI, LabelAOI, split_labels
 from creapy.similarity.grid_fixation import FixationGrid
@@ -14,6 +13,8 @@ from creapy.misc.utils import natural_sorted
 from creapy.misc.contours import contour_levels, filled_contour_paths
 
 plt.rcParams['font.family'] = ['Arial Narrow', 'Arial', 'Helvetica', 'DejaVu Sans', 'sans-serif']
+
+HEATMAP_CELLS = 200  # heatmap grid points along the longer image side; the cells are square
 
 
 def sizes_of_stimulus(sizes, stimulus=None):
@@ -95,6 +96,11 @@ class FixationData(StimulusGaze):
         self.weights_fd_adjusted = self.fix_dur / self.df.groupby(subj_index_col)[fix_dur_col].transform('sum')
         self.image_scale = self.scale if image_scale is None else image_scale  # image px per px of the original medium
 
+        long_side = max(self.width, self.height)
+        nx = max(2, int(round(HEATMAP_CELLS * self.width / long_side)))
+        ny = max(2, int(round(HEATMAP_CELLS * self.height / long_side)))
+        self.hm_xi, self.hm_yi = np.meshgrid(np.linspace(0, self.width, nx), np.linspace(0, self.height, ny))
+
         self.cache_heatmap_zi = {}
         self.cache_label_sets = {}  # column -> list of label sets, one per fixation (see aoi_mask)
         self.cache_heatmap_contour = {}
@@ -148,18 +154,22 @@ class FixationData(StimulusGaze):
         offset = df_[['subj', 'trial']].merge(df_span, on=['subj', 'trial'], how='left')['offset'].to_numpy()
         return pd.Series(t_in.to_numpy(dtype=float) + offset, index=self.df.index)
 
+    def heatmap_kernel_sd(self, bw_method=0.1):
+        """SD (image px) of the heatmap's round kernel: bw_method times the geometric mean of the fixations' SDs."""
+        w = np.asarray(self.weights_fd_adjusted, dtype=float)
+        if self.fix_xy.shape[1] < 3 or np.linalg.matrix_rank(np.cov(self.fix_xy)) < 2:
+            return 0.05 * self.width
+        cov = np.cov(self.fix_xy, aweights=w)
+        return float(bw_method * np.linalg.det(cov) ** 0.25)
+
     def __compute_heatmap_zi(self, bw_method):
         if bw_method not in self.cache_heatmap_zi:
-            if self.fix_xy.shape[1] < 3 or np.linalg.matrix_rank(np.cov(self.fix_xy)) < 2:
-                zi = np.zeros(self.xi.shape)
-                for x, y, w in zip(self.fix_x, self.fix_y, self.weights_fd_adjusted):
-                    zi += w * np.exp(-0.5 * (((self.xi - x) ** 2 + (self.yi - y) ** 2) / (0.05 * self.width) ** 2))
-                self.cache_heatmap_zi[bw_method] = zi
-            else:
-                kernel_density_estimate = sp.stats.gaussian_kde(self.fix_xy, bw_method=bw_method,
-                                                                weights=self.weights_fd_adjusted)
-                self.cache_heatmap_zi[bw_method] = kernel_density_estimate(
-                    np.vstack([self.xi.ravel(), self.yi.ravel()])).reshape(self.xi.shape)
+            s = self.heatmap_kernel_sd(bw_method)
+            w = np.asarray(self.weights_fd_adjusted, dtype=float)
+            w = w / w.sum()
+            gx = np.exp(-0.5 * ((self.hm_xi[0][None, :] - self.fix_x.to_numpy()[:, None]) / s) ** 2)
+            gy = np.exp(-0.5 * ((self.hm_yi[:, 0][None, :] - self.fix_y.to_numpy()[:, None]) / s) ** 2)
+            self.cache_heatmap_zi[bw_method] = (gy * w[:, None]).T @ gx / (2 * np.pi * s ** 2)
         return self.cache_heatmap_zi[bw_method]
 
     def heatmap_max(self, bw_method=0.1):
@@ -180,7 +190,7 @@ class FixationData(StimulusGaze):
                 assert vmax > 0
                 levels = np.linspace(0, vmax, num_levels + 1)
                 zi = np.minimum(zi, vmax * (1 - 1e-9))
-            self.cache_heatmap_contour[key] = filled_contour_paths(self.xi, self.yi, zi, levels)
+            self.cache_heatmap_contour[key] = filled_contour_paths(self.hm_xi, self.hm_yi, zi, levels)
         return self.cache_heatmap_contour[key]
 
     def make_heatmap(self, ax, bw_method=0.1, num_levels=20, from_level=1, cmap='coolwarm', alpha=0.75,

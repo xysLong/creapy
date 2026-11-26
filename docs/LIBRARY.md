@@ -128,6 +128,7 @@ Fixations of all participants on one stimulus image.
 - `.subset(subjects=None, t_range=None)`: A new FixationData with only the selected participants.
 - `.segments(max_gap='dataset')`: Id of the unbroken stretch of viewing each fixation belongs to (aligned with self.df). A new stretch starts with every participant and trial and, when max_gap (s) is set, wherever the time between the end of one fixation and the start of the next exceeds it: in mobile eye tracking mapped onto snapshots, that is where the gaze left the snapshot. 'dataset' uses self.max_gap.
 - `.viewing_clock()`: Seconds since each participant's first fixation, with the trials laid end to end. Each trial (in mobile eye tracking: each visit of the snapshot) starts where the previous one ended, so repeated visits never overlap in time. With one trial per participant this is simply t - first t.
+- `.heatmap_kernel_sd(bw_method=0.1)`: SD (image px) of the heatmap's round kernel: bw_method times the geometric mean of the fixations' SDs.
 - `.heatmap_max(bw_method=0.1)`: Peak density of this dataset's heatmap for the given bw_method.
 - `.prepare_heatmap(bw_method=0.1, num_levels=20, vmax=None)`: Run the expensive part of make_heatmap (KDE and contouring) into the cache without touching matplotlib.
 - `.make_heatmap(ax, bw_method=0.1, num_levels=20, from_level=1, cmap='coolwarm', alpha=0.75, scatter_color=(1, 1, 1), scatter_size=1, scatter_alpha=0.5, stimulus_alpha=1.0, grayscale=False, vmax=None)`: Duration-weighted fixation heatmap over the stimulus in ax: a Gaussian KDE.
@@ -355,6 +356,7 @@ reading CSV/TSV/Excel robustly
 - `sniff_delimiter(path, encoding)`: Guess the column separator of a text table from its header line: tab, ';', ',' or '|'.
 - `read_table(path, sheet_name=0)`: Read one table (CSV/TSV/TXT with any common delimiter, or Excel with `sheet_name`) into a DataFrame.
 - `is_text(series)`: True for object and string columns (pandas 3 reads text as StringDtype).
+- `is_identifier(col)`: Columns that name participants, media or areas stay text even when every value looks like a number.
 - `convert_decimal_commas(df)`: Turn '12,5' into 12.5 in text columns that are numeric apart from the decimal comma.
 - `coerce_numeric(df)`: Make text columns numeric where at least 95 % of the non-empty values parse as numbers.
 - `numeric_columns(df)`: Names of the columns with a numeric dtype.

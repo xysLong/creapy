@@ -44,7 +44,8 @@ TOOLTIPS = {
         'contour_opacity_slider': "Transparency of the coloured density layer.",
         'color_selector': "The colour ramp from low to high density. Perceptually uniform maps (viridis, magma) "
                           "show gradual differences; diverging maps (coolwarm) emphasise the extremes.",
-        'bw_method_slider': "Smoothing bandwidth of the density estimate, as a share of the image size. Smaller "
+        'bw_method_slider': "Smoothing bandwidth of the density estimate, as a share of how widely the fixations "
+                            "spread over the image; the smoothing is equally wide in every direction. Smaller "
                             "values show many small hot spots; larger values merge them into few blurred blobs. "
                             "The hot spots move with this setting, so compare several values.",
         'num_levels_slider': "How many colour bands the density is cut into. More levels give a smoother gradient; "
