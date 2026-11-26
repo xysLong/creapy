@@ -15,7 +15,7 @@ A bundle only runs on the platform it was built on. Expect 300–500 MB unpacked
 
 ```bash
 # once, in a clean environment with the app's dependencies
-pip install -e ".[gui]" pyinstaller
+pip install -e ".[gui]" pyinstaller -c packaging/constraints.txt
 
 # macOS / Linux
 bash packaging/build.sh            # -> dist/creapy.io.app, zipped next to it

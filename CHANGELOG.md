@@ -1,8 +1,9 @@
 # Changelog
 
-## Unreleased
+## 0.2.2 (2026-11-26)
 
-- Zoom: the mouse wheel or a trackpad pinch zooms the figure at the pointer (up to 20 times), a drag or a two-finger
+Zoom
+- The mouse wheel or a trackpad pinch zooms the figure at the pointer (up to 20 times), a drag or a two-finger
   scroll on the trackpad moves around, a double-click shows the whole figure; the same through + and − in the
   figure's corner and View > Zoom In / Zoom Out / Show Whole Figure (Ctrl+Plus, Ctrl+Minus, Ctrl+0). The zoom stays
   while the parameters of the same view and stimulus change and resets with another view or stimulus. Polar plots
@@ -14,6 +15,13 @@ Fixes
   not on screen no longer triggers a render.
 - Opening a project renders the selected view once, after the areas, the clock and the participant table are in
   place, instead of once halfway and once at the end.
+- Fixation heatmap: the smoothing is round, with the same area as before (it was stretched along the fixations'
+  overall spread, so wide images got wide, flat hot spots), and the density is computed on square grid cells. The
+  slider values are kept.
+
+Packaging
+- The macOS apps declare macOS 14 as their minimum (the bundled libraries need it); `docs/INSTALL_APP.md` says so.
+- The desktop apps are built with PySide6 6.9.3 (`packaging/constraints.txt`).
 
 ## 0.2.1 (2026-11-24)
 
