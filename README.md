@@ -44,8 +44,9 @@ described on its [Methods and Software](https://crea.univie.ac.at/projects/metho
 
 ## Getting the app
 
-Download `creapy.io-...-macOS.zip` (Macs with an Apple chip), `creapy.io-...-macOS-intel.zip` (older Macs) or
-`creapy.io-...-Windows.zip` from the [releases page](https://github.com/xysLong/creapy/releases), unzip, double-click.
+Download `creapy.io-...-macOS.zip` (Macs with an Apple chip), `creapy.io-...-macOS-intel.zip` (Macs with an Intel chip;
+both need macOS 14 or newer) or `creapy.io-...-Windows.zip` (Windows 10 or 11) from the
+[releases page](https://github.com/xysLong/creapy/releases), unzip, double-click.
 The first start needs one extra click in a security dialog:
 [`docs/INSTALL_APP.md`](https://github.com/xysLong/creapy/blob/main/docs/INSTALL_APP.md) walks through it.
 

@@ -9,8 +9,11 @@ screenshot: that is useful for us, not a bother.
 | Your computer | File |
 |---|---|
 | Mac with an Apple chip (M1, M2, M3, M4; sold since late 2020: look under the Apple menu → About This Mac, "Chip") | `creapy.io-…-macOS.zip` |
-| Older Mac (Intel) | `creapy.io-…-macOS-intel.zip` |
+| Mac with an Intel chip (sold until 2020) | `creapy.io-…-macOS-intel.zip` |
 | Windows 10 or 11 | `creapy.io-…-Windows.zip` |
+
+Both Mac versions need **macOS 14 (Sonoma) or newer**: Apple menu → About This Mac shows the version. A Mac that
+cannot be updated to macOS 14 (most models from 2017 and earlier) cannot run the app; write to us in that case.
 
 The files are attached to the releases at <https://github.com/xysLong/creapy/releases> (or handed to you directly).
 
@@ -30,6 +33,8 @@ The files are attached to the releases at <https://github.com/xysLong/creapy/rel
    `xattr -dr com.apple.quarantine ~/Downloads/creapy.io.app`
 
    (If you moved the app to Applications, use `/Applications/creapy.io.app` instead.)
+5. The first start can take a minute or longer: macOS checks every part of the program once, and the icon keeps
+   bouncing in the Dock meanwhile. Wait, and do not double-click again. Later starts take a few seconds.
 
 ## Windows
 
@@ -58,7 +63,8 @@ The files are attached to the releases at <https://github.com/xysLong/creapy/rel
 
 ## If it does not start
 
-- Mac: steps 3 and 4 above cover almost every case. If a window flashes and closes, write to us.
+- Mac: steps 3 and 4 above cover almost every case. If a window flashes and closes, or macOS says the app cannot be
+  used with this version of macOS, check that you have macOS 14 or newer and write to us.
 - Windows: if an antivirus program quarantines `creapy.io.exe`, restore it and add an exception, and tell us.
 - Both: the app needs about 2 GB of free memory for a dataset with several hundred participants, and about 3 GB of disk
   space for the program plus a few unpacked bundles. Close other programs if it feels slow.
