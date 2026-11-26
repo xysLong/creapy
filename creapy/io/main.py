@@ -1441,6 +1441,7 @@ class MainWindow(QMainWindow):
                                 stim_2_path=stim_2_path, confirm_mapping=False, setting=setting)
         if not ok:
             return
+        self.render_timer.stop()
         self.project_path = path
         self.add_recent_project(path)
         grouping = state.get('grouping') or None
@@ -1483,6 +1484,7 @@ class MainWindow(QMainWindow):
         view = state.get('view')
         if view in self.VIEWS and (view not in self.ADVANCED_VIEWS or self.advanced_views_shown()):
             self.left_toolbar.setCurrentRow(self.VIEWS.index(view))
+        self.schedule_current_view(delay=30)
         self.setWindowTitle(f"creapy.io - {os.path.basename(path)}")
         self.log.log('project_opened', path=os.path.basename(path))
         if self.setting == 'mobile' and not self.settings.value("hints/mobile_seen", False, type=bool):
@@ -1874,7 +1876,8 @@ class MainWindow(QMainWindow):
 
     def debounced(self, view_name):
         def request(*_):
-            self.schedule_render(lambda: self.run_view(view_name), delay=200)
+            if view_name == self.current_view_name():
+                self.schedule_render(lambda: self.run_view(view_name), delay=200)
         return request
 
     def make_runner(self, view_name):

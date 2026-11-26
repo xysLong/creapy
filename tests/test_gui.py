@@ -199,9 +199,17 @@ def test_compare_undo_project_and_batch(qapp, silent_boxes, tmp_path, monkeypatc
     w.save_project()
     assert project.exists()
     w2 = gui.MainWindow(synchronous=True)
+    runs = []
+    run_view = w2.run_view
+    w2.run_view = lambda name: (runs.append(name), run_view(name))
     w2.open_project(str(project))
     assert w2.grouping == w.grouping and 'face' in w2.aois[list(w2.stim_dfs)[0]]
     assert len(w2.stim_dfs) == 2
+    from PySide6.QtCore import QEventLoop, QTimer
+    loop = QEventLoop()
+    QTimer.singleShot(400, loop.quit)
+    loop.exec()
+    assert runs == [w2.current_view_name()]
     out = tmp_path / "batch"
     out.mkdir()
     monkeypatch.setattr(gui.QFileDialog, 'getExistingDirectory', lambda *a, **k: str(out))
@@ -903,3 +911,24 @@ def test_session_log_records_the_whole_session(qapp, silent_boxes, tmp_path, mon
     assert w.log.enabled and any(e['event'] == 'environment' for e in read_log(w)[-3:])
     w.close()
     assert read_log(w)[-1]['event'] == 'session_end'
+
+
+def test_opening_a_lab_dataset_renders_the_selected_view(qapp, silent_boxes):
+    from PySide6.QtCore import QEventLoop, QTimer
+    w = gui.MainWindow(synchronous=True)
+    runs = []
+    run_view = w.run_view
+    w.run_view = lambda name: (runs.append(name), run_view(name))
+    w.open_example()
+    loop = QEventLoop()
+    QTimer.singleShot(600, loop.quit)
+    loop.exec()
+    assert w.setting == 'lab' and runs == ["Fixation Heatmap"]
+    assert w.main_area.currentWidget() is w.painter
+    slider = w.fix_heatmap_toolbar.scatter_size_slider
+    slider.setValue(slider.value() + 1)
+    w.visits_toolbar.display_selector.setCurrentIndex(1)
+    loop = QEventLoop()
+    QTimer.singleShot(600, loop.quit)
+    loop.exec()
+    assert runs == ["Fixation Heatmap", "Fixation Heatmap"]

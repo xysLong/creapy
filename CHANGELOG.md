@@ -9,6 +9,12 @@
   and colour bars are not zoomed; drawing an area keeps its clicks (the wheel still zooms). Save as Image saves the
   visible part.
 
+Fixes
+- Opening a lab dataset showed the Visits table instead of the selected view: a setting change in a panel that is
+  not on screen no longer triggers a render.
+- Opening a project renders the selected view once, after the areas, the clock and the participant table are in
+  place, instead of once halfway and once at the end.
+
 ## 0.2.1 (2026-11-24)
 
 Session log
