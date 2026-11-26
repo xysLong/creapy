@@ -48,6 +48,10 @@ switches.
   viewers are; matrix, group boxplot with a permutation test). *Analysis → Show Advanced Analyses* adds
   **Scanpath Comparison** (MultiMatch, ScanMatch) and **Recurrence**.
 
+**Zoom** into any figure with the mouse wheel or a pinch on the trackpad (or *View → Zoom In*, Ctrl+Plus, ⌘+ on a
+Mac); drag to move around; a double-click or Ctrl+0 shows the whole figure again. *Save as Image* saves the part
+you see.
+
 ## 4. Groups and comparisons
 
 **Analysis → Assign Participants to Groups** (or prefill from a column of your table). Groups then appear in the

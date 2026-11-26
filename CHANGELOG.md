@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Zoom: the mouse wheel or a trackpad pinch zooms the figure at the pointer (up to 20 times), a drag or a two-finger
+  scroll on the trackpad moves around, a double-click shows the whole figure; the same through + and − in the
+  figure's corner and View > Zoom In / Zoom Out / Show Whole Figure (Ctrl+Plus, Ctrl+Minus, Ctrl+0). The zoom stays
+  while the parameters of the same view and stimulus change and resets with another view or stimulus. Polar plots
+  and colour bars are not zoomed; drawing an area keeps its clicks (the wheel still zooms). Save as Image saves the
+  visible part.
+
 ## 0.2.1 (2026-11-24)
 
 Session log

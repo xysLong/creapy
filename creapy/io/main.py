@@ -16,7 +16,7 @@ from PySide6.QtWidgets import (
     QSplitter, QListWidget, QStackedWidget, QMessageBox, QGraphicsOpacityEffect, QInputDialog, QProgressDialog,
     QToolButton, QDockWidget, QTextBrowser, QScrollArea, QGridLayout
 )
-from PySide6.QtGui import QPixmap, QAction, QDesktopServices, QActionGroup
+from PySide6.QtGui import QPixmap, QAction, QDesktopServices, QActionGroup, QKeySequence
 from PySide6 import QtCore
 from PySide6.QtCore import Qt, QStandardPaths, QTimer, QEventLoop, QPropertyAnimation, QUrl, QLocale, QSettings
 from matplotlib import pyplot as plt
@@ -161,6 +161,15 @@ class MainWindow(QMainWindow):
         edit_menu.addAction(self.redo_action)
         self.update_undo_actions()
 
+        view_menu = menubar.addMenu("&View")
+        self.zoom_in_action = self.make_action("Zoom In", lambda: self.zoom_canvas('in'))
+        self.zoom_in_action.setShortcuts([QKeySequence.ZoomIn, QKeySequence("Ctrl+=")])
+        self.zoom_out_action = self.make_action("Zoom Out", lambda: self.zoom_canvas('out'))
+        self.zoom_out_action.setShortcuts([QKeySequence.ZoomOut])
+        self.zoom_reset_action = self.make_action("Show Whole Figure", lambda: self.zoom_canvas('reset'), "Ctrl+0")
+        for action in (self.zoom_in_action, self.zoom_out_action, self.zoom_reset_action):
+            view_menu.addAction(action)
+
         analysis_menu = menubar.addMenu("&Analysis")
         self.groups_action = self.make_action("Assign Participants to Groups…", self.assign_groups, "Ctrl+G")
         analysis_menu.addAction(self.groups_action)
@@ -246,8 +255,24 @@ class MainWindow(QMainWindow):
     def set_workspace_actions_enabled(self, enabled):
         for action in (self.save_image_action, self.export_table_action, self.groups_action, self.batch_action,
                        self.save_project_action, self.compare_action, self.stop_compare_action, self.clock_action,
-                       self.attributes_action, self.min_dur_action, self.zero_rows_action):
+                       self.attributes_action, self.min_dur_action, self.zero_rows_action, self.zoom_in_action,
+                       self.zoom_out_action, self.zoom_reset_action):
             action.setEnabled(enabled)
+
+    def zoom_canvas(self, how):
+        if self.main_area.currentWidget() is not self.painter:
+            return
+        {'in': self.painter.zoom_in, 'out': self.painter.zoom_out, 'reset': self.painter.reset_zoom}[how]()
+
+    def on_zoomed(self, level, how):
+        self.zoom_hows.add(how)
+        self.zoom_log_timer.start()
+
+    def log_zoom(self):
+        zoom = self.painter.zoom
+        view = [[round(v, 3) for v in limits] for limits in zoom.view()]
+        self.log.log('zoom', level=round(zoom.level(), 2), how=sorted(self.zoom_hows), visible=view)
+        self.zoom_hows = set()
 
     def show_help(self, title, html):
         help_texts.HelpDialog(title, html, parent=self).exec()
@@ -1663,6 +1688,12 @@ class MainWindow(QMainWindow):
 
         self.painter = PainterWidget()
         self.painter.setAccessibleName("canvas")
+        self.painter.zoomed.connect(self.on_zoomed)
+        self.zoom_log_timer = QTimer(self)
+        self.zoom_log_timer.setSingleShot(True)
+        self.zoom_log_timer.setInterval(400)
+        self.zoom_log_timer.timeout.connect(self.log_zoom)
+        self.zoom_hows = set()
         self.table_view = DataFrameView()
 
         self.main_area = QStackedWidget()
@@ -1941,9 +1972,10 @@ class MainWindow(QMainWindow):
         fig.text(0.5, 0.5, text, ha='center', va='center', color='#9ba0ab', fontsize=12, wrap=True)
         self.show_figure(fig, None)
 
-    def show_figure(self, fig, caption=None):
+    def show_figure(self, fig, caption=None, zoom_key=None):
         self.main_area.setCurrentWidget(self.painter)
-        self.painter.draw_figure(fig)
+        self.painter.set_drag_pan(True)
+        self.painter.draw_figure(fig, zoom_key)
         self.painter.set_caption(caption)
         self.current_caption = caption
         plt.close(fig)
@@ -2216,7 +2248,8 @@ class MainWindow(QMainWindow):
             plt.close(fig)
             self.show_table(result[0], result[1])
             return
-        self.show_figure(fig, glossary.figure_caption(view_name, params) if axes_kind != 'image' else None)
+        self.show_figure(fig, glossary.figure_caption(view_name, params) if axes_kind != 'image' else None,
+                         zoom_key=(view_name, self.current_path, axes_kind, len(panels), params.get('display')))
         self.current_axes_kind = axes_kind
         self.current_table = result[0] if isinstance(result, tuple) else result
         if view_name == 'Areas of Interest' and params['display'] == 'Image with AOIs' and not multi \
@@ -2407,6 +2440,7 @@ class MainWindow(QMainWindow):
         canvas.setFocusPolicy(Qt.StrongFocus)
         canvas.setFocus()
         canvas.setCursor(Qt.CrossCursor)
+        self.painter.set_drag_pan(False)
 
     def cancel_drawing(self):
         if self.drawing is None:
@@ -2422,6 +2456,7 @@ class MainWindow(QMainWindow):
         self.canvas_connections = []
         canvas.setCursor(Qt.ArrowCursor)
         self.drawing = None
+        self.painter.set_drag_pan(True)
         canvas.draw_idle()
 
     def on_canvas_press(self, event):

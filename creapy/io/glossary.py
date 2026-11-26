@@ -39,6 +39,14 @@ STIMULUS_TIPS = {
                           "the artwork.",
 }
 
+ZOOM_TIPS = {
+    'zoom_in': "Enlarge the figure. The mouse wheel or a pinch on the trackpad zooms in at the pointer.",
+    'zoom_out': "Shrink the figure back towards its whole extent.",
+    'zoom_reset': "Show the whole figure again (also a double-click on it). While zoomed in, drag the figure to move "
+                  "around; Save Figure saves the part you see.",
+}
+
+
 TOOLTIPS = {
     'fix_heatmap': dict(STIMULUS_TIPS, **{
         'contour_opacity_slider': "Transparency of the coloured density layer.",

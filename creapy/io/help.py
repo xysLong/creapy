@@ -18,7 +18,9 @@ creapy's own data folder. The steps below are for your own data.</p>
     (for Tobii glasses data: the snapshot images). Names are matched case-insensitively, with or without
     extension.</li>
 <li><b>Explore.</b> Thumbnails above the canvas switch the stimulus; the list on the left switches the view;
-    the panel on the right holds the parameters. Settings persist across stimuli so they stay comparable.</li>
+    the panel on the right holds the parameters. Settings persist across stimuli so they stay comparable.
+    To look closer, scroll the mouse wheel or pinch on the trackpad over the figure (or use the + and − in its
+    corner, <i>View &gt; Zoom In</i>); drag to move around, double-click to see the whole figure again.</li>
 <li><b>Filter and export.</b> The <i>Show</i> bar restricts every view to one participant, one group or a
     time window (e.g. the first 3 seconds). <i>Save as Image</i> exports the figure; tables (statistics,
     AOI metrics) export as CSV or Excel. <i>File &gt; Export This View for All Stimuli</i> writes the current

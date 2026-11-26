@@ -104,6 +104,29 @@ QLabel#FigureCaption {
     color: #9ba0ab;
 }
 
+QFrame#ZoomBar {
+    background-color: rgba(24, 26, 32, 0.92);
+    border: 1px solid #3b404c;
+    border-radius: 8px;
+}
+
+QPushButton#ZoomButton {
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    padding: 3px 9px;
+    font-size: 14px;
+}
+
+QPushButton#ZoomButton:hover:enabled {
+    background-color: #282c36;
+}
+
+QPushButton#ZoomButton:disabled {
+    background: transparent;
+    color: #5a5f6d;
+}
+
 /* ---------- Explanations ---------- */
 
 QDockWidget#ExplainerDock {
