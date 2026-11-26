@@ -58,6 +58,6 @@ if sys.platform == 'darwin':
             'CFBundleShortVersionString': creapy.__version__,
             'CFBundleVersion': creapy.__version__,
             'NSHighResolutionCapable': True,
-            'LSMinimumSystemVersion': '12.0',
+            'LSMinimumSystemVersion': '14.0',
         },
     )
